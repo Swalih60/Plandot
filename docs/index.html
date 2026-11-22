@@ -1,0 +1,68 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Plandot · Private daily planner</title>
+<meta name="description" content="Plandot: a private, offline daily planner and to-do list. No account, no ads, no analytics.">
+<style>
+  :root { --bg:#fafafa; --fg:#171717; --muted:#5c5c5c; --line:#e6e6e8; --accent:#5b5bf6; --card:#ffffff; --hi:#ff4d57; --med:#f5a524; --low:#4f8ef7; }
+  @media (prefers-color-scheme: dark) {
+    :root { --bg:#0e0e10; --fg:#f4f4f5; --muted:#a1a1aa; --line:#27272a; --accent:#7088ff; --card:#18181b; }
+  }
+  * { box-sizing:border-box; }
+  html { -webkit-text-size-adjust:100%; }
+  body { margin:0; background:var(--bg); color:var(--fg); font:16px/1.65 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif; }
+  main { max-width:720px; margin:0 auto; padding:32px 16px 64px; }
+  a { color:var(--accent); }
+  h1 { font-size:2rem; line-height:1.2; margin:40px 0 4px; letter-spacing:-.02em; }
+  .lede { color:var(--muted); font-size:1.05rem; margin:8px 0 0; }
+  .demo { margin:28px 0; background:var(--card); border:1px solid var(--line); border-radius:14px; padding:6px 16px; max-width:420px; }
+  .row { display:flex; align-items:center; gap:12px; padding:10px 0; border-bottom:1px solid var(--line); }
+  .row:last-child { border-bottom:0; }
+  .box { width:20px; height:20px; border-radius:50%; border:2px solid var(--line); flex:none; display:grid; place-items:center; }
+  .box.done { background:var(--accent); border-color:var(--accent); color:#fff; font-size:12px; }
+  .row.done span.t { text-decoration:line-through; color:var(--muted); }
+  .t { flex:1; }
+  .tag { font-size:.8rem; color:var(--muted); }
+  .p { width:8px; height:8px; border-radius:50%; flex:none; }
+  .facts { list-style:none; padding:0; margin:0; display:grid; gap:8px; }
+  .facts li::before { content:"✓ "; color:var(--accent); font-weight:700; }
+  .links { display:flex; flex-wrap:wrap; gap:12px; margin-top:28px; }
+  .links a { display:inline-block; padding:10px 16px; border:1px solid var(--line); border-radius:10px; background:var(--card); text-decoration:none; font-weight:600; }
+  footer { margin-top:48px; padding-top:16px; border-top:1px solid var(--line); color:var(--muted); font-size:.9rem; }
+</style>
+</head>
+<body>
+<main>
+<h1>Plandot</h1>
+<p class="lede">A calm, private daily planner. Type what you need to do, tick it off, and see tomorrow coming.</p>
+
+<div class="demo" aria-hidden="true">
+  <div class="row done"><span class="box done">✓</span><span class="t">Team standup</span><span class="tag">9:30</span></div>
+  <div class="row"><span class="box"></span><span class="t">Gym</span><span class="tag">#health · 7 am</span><span class="p" style="background:var(--hi)"></span></div>
+  <div class="row"><span class="box"></span><span class="t">Pay electricity bill</span><span class="p" style="background:var(--med)"></span></div>
+  <div class="row"><span class="box"></span><span class="t">Buy groceries</span><span class="tag">2 / 5</span><span class="p" style="background:var(--low)"></span></div>
+</div>
+
+<ul class="facts">
+  <li>Quick add in plain words: “Gym tomorrow 7am !high #health”</li>
+  <li>Priorities, notes, subtasks, tags, due times and reminders</li>
+  <li>Overdue tasks move to today with one tap; a daily note and search</li>
+  <li>No account, no ads, no analytics. Your tasks stay on your device.</li>
+  <li>Export a backup file any time</li>
+</ul>
+
+<h2 style="font-size:1.15rem;margin:32px 0 8px">Support</h2>
+<p>Questions, bugs or ideas: <a href="mailto:support@EXAMPLE.com">support@EXAMPLE.com</a>. To restore Pro on a new phone, use <em>Restore purchases</em> in the app with the same Apple or Google account. To move your tasks, export a backup in Settings on the old phone and import it on the new one.</p>
+
+<div class="links">
+  <a href="privacy.html">Privacy Policy</a>
+  <a href="terms.html">Terms of Use</a>
+  <a href="mailto:support@EXAMPLE.com">Contact support</a>
+</div>
+
+<footer>Made by an independent developer in India.</footer>
+</main>
+</body>
+</html>
