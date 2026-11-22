@@ -9,6 +9,7 @@ import 'services/reminders.dart';
 import 'ui/focus_screen.dart';
 import 'ui/home_screen.dart';
 import 'ui/onboarding_screen.dart';
+import 'ui/splash.dart';
 import 'ui/stats_screen.dart';
 import 'ui/task_editor.dart';
 import 'ui/theme.dart';
@@ -43,7 +44,8 @@ class _EditShotState extends State<_EditShot> {
   void initState() {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback(
-        (_) => showTaskEditor(context, task: widget.task, day: widget.day));
+      (_) => showTaskEditor(context, task: widget.task, day: widget.day),
+    );
   }
 
   @override
@@ -76,7 +78,8 @@ class TicklistApp extends StatelessWidget {
       child: Consumer2<TaskStore, ProService>(
         builder: (context, s, p, _) {
           // Premium themes fall back to the default if Pro lapses.
-          final accent = accents[p.isPro ? s.accent.clamp(0, accents.length - 1) : 0].$2;
+          final accent =
+              accents[p.isPro ? s.accent.clamp(0, accents.length - 1) : 0].$2;
           return MaterialApp(
             title: AppConfig.appName,
             debugShowCheckedModeBanner: false,
@@ -87,12 +90,16 @@ class TicklistApp extends StatelessWidget {
               AppThemeMode.light => ThemeMode.light,
               AppThemeMode.dark => ThemeMode.dark,
             },
-            home: _shotScreen(s) ?? AnimatedSwitcher(
-              duration: const Duration(milliseconds: 500),
-              child: s.onboarded
-                  ? const HomeScreen(key: ValueKey('home'))
-                  : const OnboardingScreen(key: ValueKey('onboarding')),
-            ),
+            home:
+                _shotScreen(s) ??
+                SplashGate(
+                  child: AnimatedSwitcher(
+                    duration: const Duration(milliseconds: 500),
+                    child: s.onboarded
+                        ? const HomeScreen(key: ValueKey('home'))
+                        : const OnboardingScreen(key: ValueKey('onboarding')),
+                  ),
+                ),
           );
         },
       ),
