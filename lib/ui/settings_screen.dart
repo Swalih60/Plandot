@@ -290,7 +290,7 @@ class SettingsScreen extends StatelessWidget {
                 }
               },
             ),
-            if (pro.isPro)
+            if (pro.isPro && !ProService.ownerBuild)
               ListTile(
                 leading: const Icon(Icons.credit_card_rounded),
                 title: const Text('Manage subscription'),

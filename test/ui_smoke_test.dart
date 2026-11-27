@@ -175,7 +175,9 @@ void main() {
     expect(s.timelineView, isTrue);
     expect(find.byType(DayTimeline), findsOneWidget);
     // The timeline scrolled to "now"; go back up to reach the toggle.
-    t.state<ScrollableState>(find.byType(Scrollable).first).position.jumpTo(0);
+    for (final st in t.stateList<ScrollableState>(find.byType(Scrollable))) {
+      if (st.position.axis == Axis.vertical) st.position.jumpTo(0);
+    }
     await frames(t, 5);
     await t.tap(find.byKey(const Key('view-list')));
     await frames(t, 10);

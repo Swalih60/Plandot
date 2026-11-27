@@ -38,11 +38,27 @@ class _RootShellState extends State<RootShell> {
       badge: openCount,
       go: _go,
       child: Scaffold(
-        body: IndexedStack(
-          index: _tab,
+        body: Stack(
           children: [
-            _FadeIn(visible: _tab == 0, child: const HomeScreen()),
-            _FadeIn(visible: _tab == 1, child: const TasksScreen()),
+            IndexedStack(
+              index: _tab,
+              children: [
+                _FadeIn(visible: _tab == 0, child: const HomeScreen()),
+                _FadeIn(visible: _tab == 1, child: const TasksScreen()),
+              ],
+            ),
+            // Compact floating pill: no strip, no divider line. The system
+            // navigation area is spacing below it, never padding inside it.
+            Positioned(
+              left: 0,
+              right: 0,
+              bottom: 0,
+              child: SafeArea(
+                top: false,
+                minimum: const EdgeInsets.only(bottom: 12),
+                child: const ShellSwitch(),
+              ),
+            ),
           ],
         ),
       ),
@@ -65,6 +81,10 @@ class ShellScope extends InheritedWidget {
 
   static ShellScope? maybeOf(BuildContext context) =>
       context.dependOnInheritedWidgetOfExactType<ShellScope>();
+
+  /// Extra bottom offset for a screen's + button so it sits above the bar.
+  static double fabLift(BuildContext context) =>
+      maybeOf(context) == null ? 0 : 66;
 
   @override
   bool updateShouldNotify(ShellScope old) =>
@@ -91,7 +111,7 @@ class _FadeIn extends StatelessWidget {
   );
 }
 
-/// Compact, centred Today | Tasks switch for the top of each screen.
+/// Compact, centred Today | Tasks pill floating at the bottom.
 /// Renders nothing when used outside [RootShell] (e.g. in tests).
 class ShellSwitch extends StatelessWidget {
   const ShellSwitch({super.key});
@@ -106,16 +126,17 @@ class ShellSwitch extends StatelessWidget {
       (Icons.inbox_rounded, 'Tasks'),
     ];
     return Padding(
-      padding: const EdgeInsets.only(top: 6, bottom: 2),
+      padding: EdgeInsets.zero,
       child: Center(
         child: Container(
           width: 264,
-          height: 42,
-          padding: const EdgeInsets.all(4),
+          height: 52,
+          padding: const EdgeInsets.all(5),
           decoration: BoxDecoration(
             color: pal.card,
             borderRadius: BorderRadius.circular(999),
             border: Border.all(color: pal.line),
+            boxShadow: softShadow(context),
           ),
           child: LayoutBuilder(
             builder: (context, c) {

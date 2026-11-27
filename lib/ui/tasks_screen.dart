@@ -162,8 +162,12 @@ class _TasksScreenState extends State<TasksScreen> {
     int count(Priority p) => allOpen.where((t) => t.priority == p).length;
 
     return Scaffold(
-      floatingActionButton: _Fab(
-        onTap: () => showTaskEditor(context, day: _today, anytime: true),
+      // Lifted above the floating Today/Tasks bar.
+      floatingActionButton: Padding(
+        padding: EdgeInsets.only(bottom: ShellScope.fabLift(context)),
+        child: _Fab(
+          onTap: () => showTaskEditor(context, day: _today, anytime: true),
+        ),
       ),
       body: Stack(
         children: [
@@ -175,10 +179,6 @@ class _TasksScreenState extends State<TasksScreen> {
               slivers: [
                 SliverSafeArea(
                   bottom: false,
-                  sliver: const SliverToBoxAdapter(child: ShellSwitch()),
-                ),
-                SliverPadding(
-                  padding: EdgeInsets.zero,
                   sliver: SliverToBoxAdapter(
                     child: Padding(
                       padding: const EdgeInsets.fromLTRB(20, 12, 20, 4),
@@ -248,42 +248,56 @@ class _TasksScreenState extends State<TasksScreen> {
                     ),
                   ),
                 ),
-                SliverToBoxAdapter(
-                  child: SizedBox(
-                    height: 58,
-                    child: ListView(
-                      scrollDirection: Axis.horizontal,
-                      padding: const EdgeInsets.fromLTRB(16, 14, 16, 4),
-                      children: [
-                        _Chip(
-                          'All',
-                          allOpen.length,
-                          pal.ink,
-                          _filter == TaskFilter.all,
-                          () => setState(() => _filter = TaskFilter.all),
-                        ),
-                        _Chip(
-                          'High',
-                          count(Priority.high),
-                          priorityColor(Priority.high),
-                          _filter == TaskFilter.high,
-                          () => setState(() => _filter = TaskFilter.high),
-                        ),
-                        _Chip(
-                          'Medium',
-                          count(Priority.medium),
-                          priorityColor(Priority.medium),
-                          _filter == TaskFilter.medium,
-                          () => setState(() => _filter = TaskFilter.medium),
-                        ),
-                        _Chip(
-                          'Low',
-                          count(Priority.low),
-                          priorityColor(Priority.low),
-                          _filter == TaskFilter.low,
-                          () => setState(() => _filter = TaskFilter.low),
-                        ),
-                      ],
+                // Four equal chips: always all visible, even on narrow phones.
+                SliverPadding(
+                  padding: const EdgeInsets.fromLTRB(16, 14, 16, 2),
+                  sliver: SliverToBoxAdapter(
+                    child: SizedBox(
+                      height: 40,
+                      child: Row(
+                        children: [
+                          Expanded(
+                            flex: 5,
+                            child: _Chip(
+                              'All',
+                              allOpen.length,
+                              pal.ink,
+                              _filter == TaskFilter.all,
+                              () => setState(() => _filter = TaskFilter.all),
+                            ),
+                          ),
+                          Expanded(
+                            flex: 8,
+                            child: _Chip(
+                              'High',
+                              count(Priority.high),
+                              priorityColor(Priority.high),
+                              _filter == TaskFilter.high,
+                              () => setState(() => _filter = TaskFilter.high),
+                            ),
+                          ),
+                          Expanded(
+                            flex: 10,
+                            child: _Chip(
+                              'Medium',
+                              count(Priority.medium),
+                              priorityColor(Priority.medium),
+                              _filter == TaskFilter.medium,
+                              () => setState(() => _filter = TaskFilter.medium),
+                            ),
+                          ),
+                          Expanded(
+                            flex: 8,
+                            child: _Chip(
+                              'Low',
+                              count(Priority.low),
+                              priorityColor(Priority.low),
+                              _filter == TaskFilter.low,
+                              () => setState(() => _filter = TaskFilter.low),
+                            ),
+                          ),
+                        ],
+                      ),
                     ),
                   ),
                 ),
@@ -378,7 +392,7 @@ class _TasksScreenState extends State<TasksScreen> {
                       ),
                     ),
                   ),
-                const SliverToBoxAdapter(child: SizedBox(height: 120)),
+                const SliverToBoxAdapter(child: SizedBox(height: 190)),
               ],
             ),
           ),
@@ -571,7 +585,7 @@ class _Chip extends StatelessWidget {
     final pal = context.pal;
     final fg = selected ? (color == pal.ink ? pal.bg : Colors.white) : pal.ink;
     return Padding(
-      padding: const EdgeInsets.only(right: 8),
+      padding: const EdgeInsets.symmetric(horizontal: 3),
       child: GestureDetector(
         onTap: () {
           HapticFeedback.selectionClick();
@@ -580,43 +594,48 @@ class _Chip extends StatelessWidget {
         child: AnimatedContainer(
           duration: T.med,
           curve: T.ease,
-          padding: const EdgeInsets.symmetric(horizontal: 14),
+          padding: const EdgeInsets.symmetric(horizontal: 6),
           decoration: BoxDecoration(
             color: selected ? color : pal.card,
             borderRadius: BorderRadius.circular(999),
             border: Border.all(color: selected ? color : pal.line),
           ),
-          child: Row(
-            children: [
-              if (color != pal.ink) ...[
-                Container(
-                  width: 8,
-                  height: 8,
-                  decoration: BoxDecoration(
-                    shape: BoxShape.circle,
-                    color: selected ? Colors.white : color,
+          alignment: Alignment.center,
+          child: FittedBox(
+            fit: BoxFit.scaleDown,
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                if (color != pal.ink) ...[
+                  Container(
+                    width: 8,
+                    height: 8,
+                    decoration: BoxDecoration(
+                      shape: BoxShape.circle,
+                      color: selected ? Colors.white : color,
+                    ),
+                  ),
+                  const SizedBox(width: 7),
+                ],
+                Text(
+                  label,
+                  style: TextStyle(
+                    fontWeight: FontWeight.w700,
+                    color: fg,
+                    fontSize: 13.5,
                   ),
                 ),
-                const SizedBox(width: 7),
+                const SizedBox(width: 6),
+                Text(
+                  '$count',
+                  style: TextStyle(
+                    fontWeight: FontWeight.w700,
+                    fontSize: 12.5,
+                    color: fg.withValues(alpha: 0.6),
+                  ),
+                ),
               ],
-              Text(
-                label,
-                style: TextStyle(
-                  fontWeight: FontWeight.w700,
-                  color: fg,
-                  fontSize: 13.5,
-                ),
-              ),
-              const SizedBox(width: 6),
-              Text(
-                '$count',
-                style: TextStyle(
-                  fontWeight: FontWeight.w700,
-                  fontSize: 12.5,
-                  color: fg.withValues(alpha: 0.6),
-                ),
-              ),
-            ],
+            ),
           ),
         ),
       ),

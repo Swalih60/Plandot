@@ -208,8 +208,10 @@ class _HomeScreenState extends State<HomeScreen> {
     final timeline = context.watch<ProService>().isPro && store.timelineView;
 
     return Scaffold(
-      floatingActionButton: _AddButton(
-        onTap: () => showTaskEditor(context, day: _day),
+      // Lifted above the floating Today/Tasks bar.
+      floatingActionButton: Padding(
+        padding: EdgeInsets.only(bottom: ShellScope.fabLift(context)),
+        child: _AddButton(onTap: () => showTaskEditor(context, day: _day)),
       ),
       body: Stack(
         children: [
@@ -218,10 +220,6 @@ class _HomeScreenState extends State<HomeScreen> {
             slivers: [
               SliverSafeArea(
                 bottom: false,
-                sliver: const SliverToBoxAdapter(child: ShellSwitch()),
-              ),
-              SliverPadding(
-                padding: EdgeInsets.zero,
                 sliver: SliverToBoxAdapter(
                   child: Padding(
                     padding: const EdgeInsets.fromLTRB(20, 12, 8, 4),
@@ -320,71 +318,60 @@ class _HomeScreenState extends State<HomeScreen> {
                           ),
                 ),
               ),
-              SliverToBoxAdapter(
-                child: SizedBox(
-                  height: 60,
-                  child: Row(
-                    children: [
-                      Expanded(
-                        child: ShaderMask(
-                          // Soft fade where the chips scroll under the toggle.
-                          shaderCallback: (r) => const LinearGradient(
-                            colors: [
-                              Colors.white,
-                              Colors.white,
-                              Colors.transparent,
-                            ],
-                            stops: [0, 0.88, 1],
-                          ).createShader(r),
-                          blendMode: BlendMode.dstIn,
-                          child: ListView(
-                            scrollDirection: Axis.horizontal,
-                            padding: const EdgeInsets.fromLTRB(16, 14, 8, 6),
-                            children: [
-                              _FilterChip(
-                                label: 'All',
-                                count: all.length,
-                                selected: _filter == TaskFilter.all,
-                                color: pal.ink,
-                                onTap: () =>
-                                    setState(() => _filter = TaskFilter.all),
-                              ),
-                              _FilterChip(
-                                label: 'High',
-                                count: count(Priority.high),
-                                selected: _filter == TaskFilter.high,
-                                color: priorityColor(Priority.high),
-                                onTap: () =>
-                                    setState(() => _filter = TaskFilter.high),
-                              ),
-                              _FilterChip(
-                                label: 'Medium',
-                                count: count(Priority.medium),
-                                selected: _filter == TaskFilter.medium,
-                                color: priorityColor(Priority.medium),
-                                onTap: () =>
-                                    setState(() => _filter = TaskFilter.medium),
-                              ),
-                              _FilterChip(
-                                label: 'Low',
-                                count: count(Priority.low),
-                                selected: _filter == TaskFilter.low,
-                                color: priorityColor(Priority.low),
-                                onTap: () =>
-                                    setState(() => _filter = TaskFilter.low),
-                              ),
-                            ],
+              // Four equal chips: always all visible, even on narrow phones.
+              SliverPadding(
+                padding: const EdgeInsets.fromLTRB(16, 14, 16, 2),
+                sliver: SliverToBoxAdapter(
+                  child: SizedBox(
+                    height: 40,
+                    child: Row(
+                      children: [
+                        Expanded(
+                          flex: 5,
+                          child: _FilterChip(
+                            label: 'All',
+                            count: all.length,
+                            selected: _filter == TaskFilter.all,
+                            color: pal.ink,
+                            onTap: () =>
+                                setState(() => _filter = TaskFilter.all),
                           ),
                         ),
-                      ),
-                      Padding(
-                        padding: const EdgeInsets.fromLTRB(0, 14, 16, 6),
-                        child: _ViewToggle(
-                          timeline: timeline,
-                          onChanged: _setTimeline,
+                        Expanded(
+                          flex: 8,
+                          child: _FilterChip(
+                            label: 'High',
+                            count: count(Priority.high),
+                            selected: _filter == TaskFilter.high,
+                            color: priorityColor(Priority.high),
+                            onTap: () =>
+                                setState(() => _filter = TaskFilter.high),
+                          ),
                         ),
-                      ),
-                    ],
+                        Expanded(
+                          flex: 10,
+                          child: _FilterChip(
+                            label: 'Medium',
+                            count: count(Priority.medium),
+                            selected: _filter == TaskFilter.medium,
+                            color: priorityColor(Priority.medium),
+                            onTap: () =>
+                                setState(() => _filter = TaskFilter.medium),
+                          ),
+                        ),
+                        Expanded(
+                          flex: 8,
+                          child: _FilterChip(
+                            label: 'Low',
+                            count: count(Priority.low),
+                            selected: _filter == TaskFilter.low,
+                            color: priorityColor(Priority.low),
+                            onTap: () =>
+                                setState(() => _filter = TaskFilter.low),
+                          ),
+                        ),
+                      ],
+                    ),
                   ),
                 ),
               ),
@@ -440,6 +427,15 @@ class _HomeScreenState extends State<HomeScreen> {
                   ),
                 ),
               ],
+              if (timeline || open.isNotEmpty || done.isNotEmpty)
+                _SectionHeader(
+                  title: timeline ? 'Schedule' : 'To do',
+                  count: timeline ? all.length : open.length,
+                  trailing: _ViewToggle(
+                    timeline: timeline,
+                    onChanged: _setTimeline,
+                  ),
+                ),
               if (timeline)
                 SliverPadding(
                   padding: const EdgeInsets.fromLTRB(16, 8, 16, 6),
@@ -454,8 +450,6 @@ class _HomeScreenState extends State<HomeScreen> {
                     ),
                   ),
                 ),
-              if (!timeline && (open.isNotEmpty || done.isNotEmpty))
-                _SectionHeader(title: 'To do', count: open.length),
               SliverPadding(
                 padding: const EdgeInsets.symmetric(horizontal: 16),
                 sliver: SliverList.list(
@@ -518,7 +512,7 @@ class _HomeScreenState extends State<HomeScreen> {
                   ),
                 ),
               ],
-              const SliverToBoxAdapter(child: SizedBox(height: 120)),
+              const SliverToBoxAdapter(child: SizedBox(height: 190)),
             ],
           ),
           Positioned.fill(
@@ -709,7 +703,7 @@ class _FilterChip extends StatelessWidget {
     final pal = context.pal;
     final fg = selected ? (color == pal.ink ? pal.bg : Colors.white) : pal.ink;
     return Padding(
-      padding: const EdgeInsets.only(right: 8),
+      padding: const EdgeInsets.symmetric(horizontal: 3),
       child: GestureDetector(
         onTap: () {
           HapticFeedback.selectionClick();
@@ -718,44 +712,49 @@ class _FilterChip extends StatelessWidget {
         child: AnimatedContainer(
           duration: T.med,
           curve: T.ease,
-          padding: const EdgeInsets.symmetric(horizontal: 14),
+          padding: const EdgeInsets.symmetric(horizontal: 6),
           decoration: BoxDecoration(
             color: selected ? color : pal.card,
             borderRadius: BorderRadius.circular(999),
             border: Border.all(color: selected ? color : pal.line),
           ),
-          child: Row(
-            children: [
-              if (color != pal.ink) ...[
-                AnimatedContainer(
-                  duration: T.med,
-                  width: 8,
-                  height: 8,
-                  decoration: BoxDecoration(
-                    shape: BoxShape.circle,
-                    color: selected ? Colors.white : color,
+          alignment: Alignment.center,
+          child: FittedBox(
+            fit: BoxFit.scaleDown,
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                if (color != pal.ink) ...[
+                  AnimatedContainer(
+                    duration: T.med,
+                    width: 8,
+                    height: 8,
+                    decoration: BoxDecoration(
+                      shape: BoxShape.circle,
+                      color: selected ? Colors.white : color,
+                    ),
+                  ),
+                  const SizedBox(width: 7),
+                ],
+                Text(
+                  label,
+                  style: TextStyle(
+                    fontWeight: FontWeight.w700,
+                    color: fg,
+                    fontSize: 13.5,
                   ),
                 ),
-                const SizedBox(width: 7),
+                const SizedBox(width: 6),
+                Text(
+                  '$count',
+                  style: TextStyle(
+                    fontWeight: FontWeight.w700,
+                    fontSize: 12.5,
+                    color: fg.withValues(alpha: 0.6),
+                  ),
+                ),
               ],
-              Text(
-                label,
-                style: TextStyle(
-                  fontWeight: FontWeight.w700,
-                  color: fg,
-                  fontSize: 13.5,
-                ),
-              ),
-              const SizedBox(width: 6),
-              Text(
-                '$count',
-                style: TextStyle(
-                  fontWeight: FontWeight.w700,
-                  fontSize: 12.5,
-                  color: fg.withValues(alpha: 0.6),
-                ),
-              ),
-            ],
+            ),
           ),
         ),
       ),
@@ -770,12 +769,14 @@ class _SectionHeader extends StatelessWidget {
     this.color,
     this.action,
     this.onAction,
+    this.trailing,
   });
   final String title;
   final int count;
   final Color? color;
   final String? action;
   final VoidCallback? onAction;
+  final Widget? trailing;
 
   @override
   Widget build(BuildContext context) {
@@ -823,6 +824,7 @@ class _SectionHeader extends StatelessWidget {
                   style: const TextStyle(fontWeight: FontWeight.w700),
                 ),
               ),
+            if (trailing != null) ...[const Spacer(), trailing!],
           ],
         ),
       ),
