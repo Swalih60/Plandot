@@ -4,22 +4,22 @@ enum Priority { none, low, medium, high }
 
 extension PriorityX on Priority {
   String get label => switch (this) {
-        Priority.none => 'None',
-        Priority.low => 'Low',
-        Priority.medium => 'Medium',
-        Priority.high => 'High',
-      };
+    Priority.none => 'None',
+    Priority.low => 'Low',
+    Priority.medium => 'Medium',
+    Priority.high => 'High',
+  };
 }
 
 enum Repeat { none, daily, weekdays, weekly }
 
 extension RepeatX on Repeat {
   String get label => switch (this) {
-        Repeat.none => 'Never',
-        Repeat.daily => 'Every day',
-        Repeat.weekdays => 'Weekdays',
-        Repeat.weekly => 'Weekly',
-      };
+    Repeat.none => 'Never',
+    Repeat.daily => 'Every day',
+    Repeat.weekdays => 'Weekdays',
+    Repeat.weekly => 'Weekly',
+  };
 }
 
 class Subtask {
@@ -30,10 +30,10 @@ class Subtask {
 
   Map<String, dynamic> toJson() => {'id': id, 'title': title, 'done': done};
   factory Subtask.fromJson(Map<String, dynamic> j) => Subtask(
-        id: j['id'] as String,
-        title: j['title'] as String? ?? '',
-        done: j['done'] as bool? ?? false,
-      );
+    id: j['id'] as String,
+    title: j['title'] as String? ?? '',
+    done: j['done'] as bool? ?? false,
+  );
 }
 
 class Task {
@@ -48,14 +48,15 @@ class Task {
     this.tag,
     this.repeat = Repeat.none,
     this.remind = false,
+    this.anytime = false,
     List<Subtask>? subtasks,
     Set<String>? doneDays,
     Map<String, int>? focus,
     DateTime? createdAt,
-  })  : subtasks = subtasks ?? [],
-        doneDays = doneDays ?? <String>{},
-        focus = focus ?? <String, int>{},
-        createdAt = createdAt ?? DateTime.now();
+  }) : subtasks = subtasks ?? [],
+       doneDays = doneDays ?? <String>{},
+       focus = focus ?? <String, int>{},
+       createdAt = createdAt ?? DateTime.now();
 
   final String id;
   String title;
@@ -70,6 +71,10 @@ class Task {
   String? tag;
   Repeat repeat;
   bool remind;
+
+  /// Lives on the Tasks list instead of a particular day. Never overdue;
+  /// stays until completed. [date] then just records when it was added.
+  bool anytime;
   final int notificationId;
   final List<Subtask> subtasks;
 
@@ -83,6 +88,7 @@ class Task {
   int focusOn(DateTime day) => focus[dayKey(day)] ?? 0;
 
   bool occursOn(DateTime day) {
+    if (anytime) return false;
     final d = dateOnly(day), start = dateOnly(date);
     switch (repeat) {
       case Repeat.none:
@@ -98,6 +104,19 @@ class Task {
 
   bool isDoneOn(DateTime day) => doneDays.contains(dayKey(day));
 
+  /// Anytime tasks are done once, whenever that happened.
+  bool get isComplete => doneDays.isNotEmpty;
+
+  /// Done state as shown for [day]: per-day for planned tasks, once-only
+  /// for anytime tasks.
+  bool doneFor(DateTime day) => anytime ? isComplete : isDoneOn(day);
+
+  /// Day an anytime task was completed (latest), if any.
+  DateTime? get completedOn {
+    if (doneDays.isEmpty) return null;
+    return parseDayKey((doneDays.toList()..sort()).last);
+  }
+
   void setDone(DateTime day, bool done) {
     final k = dayKey(day);
     done ? doneDays.add(k) : doneDays.remove(k);
@@ -105,6 +124,7 @@ class Task {
 
   /// A one-off task from an earlier day that was never completed.
   bool isOverdue(DateTime today) =>
+      !anytime &&
       repeat == Repeat.none &&
       dateOnly(date).isBefore(dateOnly(today)) &&
       !isDoneOn(date);
@@ -112,43 +132,50 @@ class Task {
   int get subtasksDone => subtasks.where((s) => s.done).length;
 
   Map<String, dynamic> toJson() => {
-        'id': id,
-        'title': title,
-        'notes': notes,
-        'priority': priority.name,
-        'date': dayKey(date),
-        'time': timeMinutes,
-        'tag': tag,
-        'repeat': repeat.name,
-        'remind': remind,
-        'nid': notificationId,
-        'subtasks': subtasks.map((s) => s.toJson()).toList(),
-        'done': doneDays.toList()..sort(),
-        if (focus.isNotEmpty) 'focus': focus,
-        'createdAt': createdAt.toIso8601String(),
-      };
+    'id': id,
+    'title': title,
+    'notes': notes,
+    'priority': priority.name,
+    'date': dayKey(date),
+    'time': timeMinutes,
+    'tag': tag,
+    'repeat': repeat.name,
+    'remind': remind,
+    if (anytime) 'anytime': true,
+    'nid': notificationId,
+    'subtasks': subtasks.map((s) => s.toJson()).toList(),
+    'done': doneDays.toList()..sort(),
+    if (focus.isNotEmpty) 'focus': focus,
+    'createdAt': createdAt.toIso8601String(),
+  };
 
   factory Task.fromJson(Map<String, dynamic> j) => Task(
-        id: j['id'] as String,
-        title: j['title'] as String? ?? '',
-        notes: j['notes'] as String? ?? '',
-        priority: Priority.values.firstWhere((p) => p.name == j['priority'],
-            orElse: () => Priority.none),
-        date: parseDayKey(j['date'] as String? ?? '') ?? dateOnly(DateTime.now()),
-        timeMinutes: (j['time'] as num?)?.toInt(),
-        tag: j['tag'] as String?,
-        repeat: Repeat.values.firstWhere((r) => r.name == j['repeat'],
-            orElse: () => Repeat.none),
-        remind: j['remind'] as bool? ?? false,
-        notificationId: (j['nid'] as num?)?.toInt() ?? 1,
-        subtasks: ((j['subtasks'] as List?) ?? const [])
-            .map((e) => Subtask.fromJson(Map<String, dynamic>.from(e as Map)))
-            .toList(),
-        doneDays: ((j['done'] as List?) ?? const []).cast<String>().toSet(),
-        focus: ((j['focus'] as Map?) ?? const {}).map(
-            (k, v) => MapEntry(k as String, (v as num?)?.toInt() ?? 0)),
-        createdAt: DateTime.tryParse(j['createdAt'] as String? ?? ''),
-      );
+    id: j['id'] as String,
+    title: j['title'] as String? ?? '',
+    notes: j['notes'] as String? ?? '',
+    priority: Priority.values.firstWhere(
+      (p) => p.name == j['priority'],
+      orElse: () => Priority.none,
+    ),
+    date: parseDayKey(j['date'] as String? ?? '') ?? dateOnly(DateTime.now()),
+    timeMinutes: (j['time'] as num?)?.toInt(),
+    tag: j['tag'] as String?,
+    repeat: Repeat.values.firstWhere(
+      (r) => r.name == j['repeat'],
+      orElse: () => Repeat.none,
+    ),
+    remind: j['remind'] as bool? ?? false,
+    anytime: j['anytime'] as bool? ?? false,
+    notificationId: (j['nid'] as num?)?.toInt() ?? 1,
+    subtasks: ((j['subtasks'] as List?) ?? const [])
+        .map((e) => Subtask.fromJson(Map<String, dynamic>.from(e as Map)))
+        .toList(),
+    doneDays: ((j['done'] as List?) ?? const []).cast<String>().toSet(),
+    focus: ((j['focus'] as Map?) ?? const {}).map(
+      (k, v) => MapEntry(k as String, (v as num?)?.toInt() ?? 0),
+    ),
+    createdAt: DateTime.tryParse(j['createdAt'] as String? ?? ''),
+  );
 }
 
 /// Built-in tags with an emoji and a colour index into [tagColors].

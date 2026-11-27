@@ -41,7 +41,9 @@ class ProService extends ChangeNotifier {
   }
 
   void _apply(CustomerInfo info) {
-    final active = info.entitlements.active.containsKey(AppConfig.entitlementId);
+    final active = info.entitlements.active.containsKey(
+      AppConfig.entitlementId,
+    );
     if (active != _isPro) {
       _isPro = active;
       notifyListeners();

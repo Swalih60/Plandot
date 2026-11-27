@@ -23,12 +23,15 @@ class SettingsScreen extends StatelessWidget {
     final store = context.read<TaskStore>();
     final dir = await getTemporaryDirectory();
     final f = File(
-        '${dir.path}/ticklist-backup-${DateFormat('yyyy-MM-dd').format(DateTime.now())}.json');
+      '${dir.path}/ticklist-backup-${DateFormat('yyyy-MM-dd').format(DateTime.now())}.json',
+    );
     await f.writeAsString(store.exportJson());
-    await SharePlus.instance.share(ShareParams(
-      files: [XFile(f.path, mimeType: 'application/json')],
-      subject: 'Plandot backup',
-    ));
+    await SharePlus.instance.share(
+      ShareParams(
+        files: [XFile(f.path, mimeType: 'application/json')],
+        subject: 'Plandot backup',
+      ),
+    );
   }
 
   Future<void> _import(BuildContext context) async {
@@ -38,10 +41,18 @@ class SettingsScreen extends StatelessWidget {
       context: context,
       builder: (ctx) => AlertDialog(
         title: const Text('Restore from backup?'),
-        content: const Text('This replaces all tasks on this device with the backup.'),
+        content: const Text(
+          'This replaces all tasks on this device with the backup.',
+        ),
         actions: [
-          TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text('Cancel')),
-          TextButton(onPressed: () => Navigator.pop(ctx, true), child: const Text('Choose file')),
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, false),
+            child: const Text('Cancel'),
+          ),
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, true),
+            child: const Text('Choose file'),
+          ),
         ],
       ),
     );
@@ -53,8 +64,13 @@ class SettingsScreen extends StatelessWidget {
       await Reminders.instance.rescheduleAll(store.allTasks);
       messenger.showSnackBar(SnackBar(content: Text('Restored $n tasks')));
     } catch (e) {
-      messenger.showSnackBar(SnackBar(
-          content: Text(e is FormatException ? e.message : 'Could not read that file.')));
+      messenger.showSnackBar(
+        SnackBar(
+          content: Text(
+            e is FormatException ? e.message : 'Could not read that file.',
+          ),
+        ),
+      );
     }
   }
 
@@ -66,25 +82,31 @@ class SettingsScreen extends StatelessWidget {
     final isIOS = Theme.of(context).platform == TargetPlatform.iOS;
 
     Widget header(String t) => Padding(
-          padding: const EdgeInsets.fromLTRB(22, 22, 22, 8),
-          child: Text(t,
-              style: TextStyle(
-                  fontSize: 12,
-                  letterSpacing: 0.8,
-                  fontWeight: FontWeight.w800,
-                  color: pal.muted)),
-        );
+      padding: const EdgeInsets.fromLTRB(22, 22, 22, 8),
+      child: Text(
+        t,
+        style: TextStyle(
+          fontSize: 12,
+          letterSpacing: 0.8,
+          fontWeight: FontWeight.w800,
+          color: pal.muted,
+        ),
+      ),
+    );
 
     Widget group(List<Widget> children) => Container(
-          margin: const EdgeInsets.symmetric(horizontal: 16),
-          decoration: BoxDecoration(
-            color: pal.card,
-            borderRadius: BorderRadius.circular(T.r),
-            border: Border.all(color: pal.line),
-          ),
-          clipBehavior: Clip.antiAlias,
-          child: Material(type: MaterialType.transparency, child: Column(children: children)),
-        );
+      margin: const EdgeInsets.symmetric(horizontal: 16),
+      decoration: BoxDecoration(
+        color: pal.card,
+        borderRadius: BorderRadius.circular(T.r),
+        border: Border.all(color: pal.line),
+      ),
+      clipBehavior: Clip.antiAlias,
+      child: Material(
+        type: MaterialType.transparency,
+        child: Column(children: children),
+      ),
+    );
 
     return Scaffold(
       appBar: AppBar(title: const Text('Settings')),
@@ -99,35 +121,48 @@ class SettingsScreen extends StatelessWidget {
                 padding: const EdgeInsets.all(20),
                 decoration: BoxDecoration(
                   borderRadius: BorderRadius.circular(24),
-                  gradient: LinearGradient(colors: [
-                    pal.accent,
-                    Color.lerp(pal.accent, Colors.black, 0.3)!,
-                  ]),
+                  gradient: LinearGradient(
+                    colors: [
+                      pal.accent,
+                      Color.lerp(pal.accent, Colors.black, 0.3)!,
+                    ],
+                  ),
                 ),
                 child: Row(
                   children: [
-                    Text(pro.isPro ? '💎' : '✨', style: const TextStyle(fontSize: 30)),
+                    Text(
+                      pro.isPro ? '💎' : '✨',
+                      style: const TextStyle(fontSize: 30),
+                    ),
                     const SizedBox(width: 14),
                     Expanded(
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          Text(pro.isPro ? 'Plandot Pro' : 'Upgrade to Pro',
-                              style: const TextStyle(
-                                  color: Colors.white,
-                                  fontSize: 18,
-                                  fontWeight: FontWeight.w800)),
+                          Text(
+                            pro.isPro ? 'Plandot Pro' : 'Upgrade to Pro',
+                            style: const TextStyle(
+                              color: Colors.white,
+                              fontSize: 18,
+                              fontWeight: FontWeight.w800,
+                            ),
+                          ),
                           Text(
                             pro.isPro
                                 ? 'Thanks for supporting indie software!'
                                 : 'Repeats, insights & premium themes',
-                            style: TextStyle(color: Colors.white.withValues(alpha: 0.85)),
+                            style: TextStyle(
+                              color: Colors.white.withValues(alpha: 0.85),
+                            ),
                           ),
                         ],
                       ),
                     ),
                     if (!pro.isPro)
-                      const Icon(Icons.arrow_forward_rounded, color: Colors.white),
+                      const Icon(
+                        Icons.arrow_forward_rounded,
+                        color: Colors.white,
+                      ),
                   ],
                 ),
               ),
@@ -141,17 +176,20 @@ class SettingsScreen extends StatelessWidget {
                 showSelectedIcon: false,
                 segments: const [
                   ButtonSegment(
-                      value: AppThemeMode.system,
-                      icon: Icon(Icons.brightness_auto_rounded),
-                      label: Text('Auto')),
+                    value: AppThemeMode.system,
+                    icon: Icon(Icons.brightness_auto_rounded),
+                    label: Text('Auto'),
+                  ),
                   ButtonSegment(
-                      value: AppThemeMode.light,
-                      icon: Icon(Icons.light_mode_rounded),
-                      label: Text('Light')),
+                    value: AppThemeMode.light,
+                    icon: Icon(Icons.light_mode_rounded),
+                    label: Text('Light'),
+                  ),
                   ButtonSegment(
-                      value: AppThemeMode.dark,
-                      icon: Icon(Icons.dark_mode_rounded),
-                      label: Text('Dark')),
+                    value: AppThemeMode.dark,
+                    icon: Icon(Icons.dark_mode_rounded),
+                    label: Text('Dark'),
+                  ),
                 ],
                 selected: {store.themeMode},
                 onSelectionChanged: (s) => store.setThemeMode(s.first),
@@ -168,8 +206,10 @@ class SettingsScreen extends StatelessWidget {
                       onTap: () async {
                         HapticFeedback.selectionClick();
                         if (i > 0 && !pro.isPro) {
-                          final ok = await showPaywall(context,
-                              reason: 'Premium themes are part of Plandot Pro.');
+                          final ok = await showPaywall(
+                            context,
+                            reason: 'Premium themes are part of Plandot Pro.',
+                          );
                           if (!ok) return;
                         }
                         store.setAccent(i);
@@ -183,16 +223,24 @@ class SettingsScreen extends StatelessWidget {
                           color: accents[i].$2,
                           shape: BoxShape.circle,
                           border: Border.all(
-                            color: store.accent == i ? pal.ink : Colors.transparent,
+                            color: store.accent == i
+                                ? pal.ink
+                                : Colors.transparent,
                             width: 3,
                           ),
                         ),
                         child: store.accent == i
-                            ? const Icon(Icons.check_rounded, color: Colors.white)
+                            ? const Icon(
+                                Icons.check_rounded,
+                                color: Colors.white,
+                              )
                             : (i > 0 && !pro.isPro)
-                                ? const Icon(Icons.lock_rounded,
-                                    size: 16, color: Colors.white)
-                                : null,
+                            ? const Icon(
+                                Icons.lock_rounded,
+                                size: 16,
+                                color: Colors.white,
+                              )
+                            : null,
                       ),
                     ),
                 ],
@@ -217,8 +265,15 @@ class SettingsScreen extends StatelessWidget {
                 final m = ScaffoldMessenger.of(context);
                 try {
                   final ok = await pro.restore();
-                  m.showSnackBar(SnackBar(
-                      content: Text(ok ? 'Pro restored 🎉' : 'No active Pro purchase found.')));
+                  m.showSnackBar(
+                    SnackBar(
+                      content: Text(
+                        ok
+                            ? 'Pro restored 🎉'
+                            : 'No active Pro purchase found.',
+                      ),
+                    ),
+                  );
                 } catch (e) {
                   m.showSnackBar(SnackBar(content: Text('$e')));
                 }
@@ -228,9 +283,11 @@ class SettingsScreen extends StatelessWidget {
               ListTile(
                 leading: const Icon(Icons.credit_card_rounded),
                 title: const Text('Manage subscription'),
-                onTap: () => openUrl(isIOS
-                    ? 'https://apps.apple.com/account/subscriptions'
-                    : 'https://play.google.com/store/account/subscriptions'),
+                onTap: () => openUrl(
+                  isIOS
+                      ? 'https://apps.apple.com/account/subscriptions'
+                      : 'https://play.google.com/store/account/subscriptions',
+                ),
               ),
             if (kDebugMode)
               SwitchListTile(
@@ -275,7 +332,8 @@ class SettingsScreen extends StatelessWidget {
             ListTile(
               leading: const Icon(Icons.mail_rounded),
               title: const Text('Contact support'),
-              onTap: () => openUrl('mailto:${AppConfig.supportEmail}?subject=Plandot'),
+              onTap: () =>
+                  openUrl('mailto:${AppConfig.supportEmail}?subject=Plandot'),
             ),
           ]),
         ],

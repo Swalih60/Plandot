@@ -13,10 +13,12 @@ import 'theme.dart';
 Future<bool> showPaywall(BuildContext context, {String? reason}) async {
   final pro = context.read<ProService>();
   if (pro.isPro) return true;
-  await Navigator.of(context).push(MaterialPageRoute(
-    fullscreenDialog: true,
-    builder: (_) => PaywallScreen(reason: reason),
-  ));
+  await Navigator.of(context).push(
+    MaterialPageRoute(
+      fullscreenDialog: true,
+      builder: (_) => PaywallScreen(reason: reason),
+    ),
+  );
   return pro.isPro;
 }
 
@@ -44,9 +46,12 @@ class _PaywallScreenState extends State<PaywallScreen> {
 
   List<Package> _packages(Offering? o) {
     if (o == null) return const [];
-    return [o.annual, o.monthly, o.lifetime, o.weekly]
-        .whereType<Package>()
-        .toList();
+    return [
+      o.annual,
+      o.monthly,
+      o.lifetime,
+      o.weekly,
+    ].whereType<Package>().toList();
   }
 
   static String? trialText(Package p) {
@@ -72,20 +77,20 @@ class _PaywallScreenState extends State<PaywallScreen> {
   }
 
   static String _title(Package p) => switch (p.packageType) {
-        PackageType.annual => 'Yearly',
-        PackageType.monthly => 'Monthly',
-        PackageType.weekly => 'Weekly',
-        PackageType.lifetime => 'Lifetime',
-        _ => p.storeProduct.title,
-      };
+    PackageType.annual => 'Yearly',
+    PackageType.monthly => 'Monthly',
+    PackageType.weekly => 'Weekly',
+    PackageType.lifetime => 'Lifetime',
+    _ => p.storeProduct.title,
+  };
 
   static String _per(Package p) => switch (p.packageType) {
-        PackageType.annual => '/year',
-        PackageType.monthly => '/month',
-        PackageType.weekly => '/week',
-        PackageType.lifetime => ' once',
-        _ => '',
-      };
+    PackageType.annual => '/year',
+    PackageType.monthly => '/month',
+    PackageType.weekly => '/week',
+    PackageType.lifetime => ' once',
+    _ => '',
+  };
 
   Future<void> _buy() async {
     final p = _selected;
@@ -95,8 +100,8 @@ class _PaywallScreenState extends State<PaywallScreen> {
       final ok = await context.read<ProService>().buy(p);
       if (ok && mounted) {
         Navigator.of(context).pop();
-        ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('Welcome to Pro! 🎉')));
+        ScaffoldMessenger.of(context)
+            .showSnackBar(const SnackBar(content: Text('Welcome to Pro! 🎉')));
       }
     } catch (e) {
       if (mounted) {
@@ -116,10 +121,14 @@ class _PaywallScreenState extends State<PaywallScreen> {
       if (ok) {
         Navigator.of(context).pop();
         ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('Purchases restored. You\'re Pro!')));
+          const SnackBar(content: Text('Purchases restored. You\'re Pro!')),
+        );
       } else {
-        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
-            content: Text('No active Pro purchase found for this account.')));
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('No active Pro purchase found for this account.'),
+          ),
+        );
       }
     } catch (e) {
       if (mounted) {
@@ -165,7 +174,10 @@ class _PaywallScreenState extends State<PaywallScreen> {
               'Plandot Pro',
               textAlign: TextAlign.center,
               style: TextStyle(
-                  fontSize: 30, fontWeight: FontWeight.w900, letterSpacing: -0.8),
+                fontSize: 30,
+                fontWeight: FontWeight.w900,
+                letterSpacing: -0.8,
+              ),
             ),
             const SizedBox(height: 6),
             Text(
@@ -179,7 +191,11 @@ class _PaywallScreenState extends State<PaywallScreen> {
               ('📊', 'Insights', 'Trends, best days, priority breakdown'),
               ('🎨', '7 premium themes', 'Make Plandot feel like yours'),
               ('⚡', 'Everything future', 'New Pro features as they ship'),
-              ('🔒', 'Private forever', 'No account, no ads, data stays on device'),
+              (
+                '🔒',
+                'Private forever',
+                'No account, no ads, data stays on device',
+              ),
             ])
               Padding(
                 padding: const EdgeInsets.symmetric(vertical: 7),
@@ -191,10 +207,17 @@ class _PaywallScreenState extends State<PaywallScreen> {
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          Text(f.$2,
-                              style: const TextStyle(
-                                  fontWeight: FontWeight.w700, fontSize: 15)),
-                          Text(f.$3, style: TextStyle(color: muted, fontSize: 13)),
+                          Text(
+                            f.$2,
+                            style: const TextStyle(
+                              fontWeight: FontWeight.w700,
+                              fontSize: 15,
+                            ),
+                          ),
+                          Text(
+                            f.$3,
+                            style: TextStyle(color: muted, fontSize: 13),
+                          ),
                         ],
                       ),
                     ),
@@ -202,7 +225,8 @@ class _PaywallScreenState extends State<PaywallScreen> {
                 ),
               ),
             const SizedBox(height: 18),
-            if (!AppConfig.storeConfigured || (pro.configured && packages.isEmpty))
+            if (!AppConfig.storeConfigured ||
+                (pro.configured && packages.isEmpty))
               Card(
                 child: Padding(
                   padding: const EdgeInsets.all(16),
@@ -236,12 +260,13 @@ class _PaywallScreenState extends State<PaywallScreen> {
                   price: '${p.storeProduct.priceString}${_per(p)}',
                   badge: p.packageType == PackageType.annual
                       ? (trialText(p) != null
-                          ? '${trialText(p)} free trial'
-                          : 'Best value')
+                            ? '${trialText(p)} free trial'
+                            : 'Best value')
                       : p.packageType == PackageType.lifetime
-                          ? 'Pay once'
-                          : null,
-                  sub: p.packageType == PackageType.annual &&
+                      ? 'Pay once'
+                      : null,
+                  sub:
+                      p.packageType == PackageType.annual &&
                           p.storeProduct.pricePerMonth != null
                       ? 'Just ${_money(p.storeProduct.pricePerMonth!, p.storeProduct.currencyCode)}/month'
                       : null,
@@ -258,21 +283,23 @@ class _PaywallScreenState extends State<PaywallScreen> {
                         height: 22,
                         child: CircularProgressIndicator(strokeWidth: 2.5),
                       )
-                    : Text(trial != null
-                        ? 'Start $trial free trial'
-                        : sel?.packageType == PackageType.lifetime
+                    : Text(
+                        trial != null
+                            ? 'Start $trial free trial'
+                            : sel?.packageType == PackageType.lifetime
                             ? 'Unlock forever'
-                            : 'Continue'),
+                            : 'Continue',
+                      ),
               ),
             const SizedBox(height: 12),
             if (sel != null)
               Text(
                 isSub
                     ? '${trial != null ? 'Free for $trial trial, then ' : ''}'
-                        '${sel.storeProduct.priceString}${_per(sel)}. '
-                        'Subscription renews automatically until cancelled. '
-                        'Cancel anytime in your ${Theme.of(context).platform == TargetPlatform.iOS ? 'App Store' : 'Google Play'} '
-                        'settings at least 24 hours before the period ends.'
+                          '${sel.storeProduct.priceString}${_per(sel)}. '
+                          'Subscription renews automatically until cancelled. '
+                          'Cancel anytime in your ${Theme.of(context).platform == TargetPlatform.iOS ? 'App Store' : 'Google Play'} '
+                          'settings at least 24 hours before the period ends.'
                     : 'One-time purchase. No subscription.',
                 textAlign: TextAlign.center,
                 style: TextStyle(color: muted, fontSize: 11.5),
@@ -283,16 +310,22 @@ class _PaywallScreenState extends State<PaywallScreen> {
               children: [
                 TextButton(
                   onPressed: () => openUrl(
-                      Theme.of(context).platform == TargetPlatform.iOS
-                          ? AppConfig.appleEulaUrl
-                          : AppConfig.termsUrl),
-                  child: const Text('Terms of Use', style: TextStyle(fontSize: 12)),
+                    Theme.of(context).platform == TargetPlatform.iOS
+                        ? AppConfig.appleEulaUrl
+                        : AppConfig.termsUrl,
+                  ),
+                  child: const Text(
+                    'Terms of Use',
+                    style: TextStyle(fontSize: 12),
+                  ),
                 ),
                 Text('·', style: TextStyle(color: muted)),
                 TextButton(
                   onPressed: () => openUrl(AppConfig.privacyUrl),
-                  child:
-                      const Text('Privacy Policy', style: TextStyle(fontSize: 12)),
+                  child: const Text(
+                    'Privacy Policy',
+                    style: TextStyle(fontSize: 12),
+                  ),
                 ),
               ],
             ),
@@ -364,32 +397,44 @@ class _PlanTile extends StatelessWidget {
                   children: [
                     Row(
                       children: [
-                        Text(title,
-                            style: const TextStyle(
-                                fontWeight: FontWeight.w800, fontSize: 16)),
+                        Text(
+                          title,
+                          style: const TextStyle(
+                            fontWeight: FontWeight.w800,
+                            fontSize: 16,
+                          ),
+                        ),
                         if (badge != null) ...[
                           const SizedBox(width: 8),
                           Container(
                             padding: const EdgeInsets.symmetric(
-                                horizontal: 8, vertical: 3),
+                              horizontal: 8,
+                              vertical: 3,
+                            ),
                             decoration: BoxDecoration(
                               color: scheme.primary,
                               borderRadius: BorderRadius.circular(20),
                             ),
-                            child: Text(badge!,
-                                style: TextStyle(
-                                    color: scheme.onPrimary,
-                                    fontSize: 11,
-                                    fontWeight: FontWeight.w700)),
+                            child: Text(
+                              badge!,
+                              style: TextStyle(
+                                color: scheme.onPrimary,
+                                fontSize: 11,
+                                fontWeight: FontWeight.w700,
+                              ),
+                            ),
                           ),
                         ],
                       ],
                     ),
                     if (sub != null)
-                      Text(sub!,
-                          style: TextStyle(
-                              fontSize: 12.5,
-                              color: scheme.onSurface.withValues(alpha: 0.6))),
+                      Text(
+                        sub!,
+                        style: TextStyle(
+                          fontSize: 12.5,
+                          color: scheme.onSurface.withValues(alpha: 0.6),
+                        ),
+                      ),
                   ],
                 ),
               ),
@@ -418,34 +463,55 @@ class _MiniGrid extends StatelessWidget {
       children: [
         for (var i = 0; i < rows.length; i++)
           Container(
-            margin: EdgeInsets.only(bottom: 8, left: i * 14.0, right: (2 - i) * 14.0),
-            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
-            decoration: BoxDecoration(
-              color: pal.card,
-              borderRadius: BorderRadius.circular(16),
-              border: Border.all(color: pal.line),
-              boxShadow: softShadow(context),
-            ),
-            child: Row(
-              children: [
-                Container(
-                  width: 22,
-                  height: 22,
-                  decoration: BoxDecoration(color: rows[i].$2, shape: BoxShape.circle),
-                  child: const Icon(Icons.check_rounded, size: 15, color: Colors.white),
+                margin: EdgeInsets.only(
+                  bottom: 8,
+                  left: i * 14.0,
+                  right: (2 - i) * 14.0,
                 ),
-                const SizedBox(width: 12),
-                Text(rows[i].$1,
-                    style: TextStyle(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 14,
+                  vertical: 12,
+                ),
+                decoration: BoxDecoration(
+                  color: pal.card,
+                  borderRadius: BorderRadius.circular(16),
+                  border: Border.all(color: pal.line),
+                  boxShadow: softShadow(context),
+                ),
+                child: Row(
+                  children: [
+                    Container(
+                      width: 22,
+                      height: 22,
+                      decoration: BoxDecoration(
+                        color: rows[i].$2,
+                        shape: BoxShape.circle,
+                      ),
+                      child: const Icon(
+                        Icons.check_rounded,
+                        size: 15,
+                        color: Colors.white,
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    Text(
+                      rows[i].$1,
+                      style: TextStyle(
                         fontWeight: FontWeight.w700,
                         color: pal.muted,
-                        decoration: TextDecoration.lineThrough)),
-              ],
-            ),
-          )
+                        decoration: TextDecoration.lineThrough,
+                      ),
+                    ),
+                  ],
+                ),
+              )
               .animate()
               .fadeIn(delay: (120 * i).ms, duration: 350.ms)
-              .slideY(begin: 0.4, curve: Curves.easeOutBack, delay: (120 * i).ms),
+              .slideY(
+                begin: 0.4,
+                curve: Curves.easeOutBack,
+                delay: (120 * i).ms,
+              ),
       ],
     );
   }

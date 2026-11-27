@@ -48,13 +48,15 @@ class Reminders {
     if (Platform.isAndroid) {
       return await _plugin
               .resolvePlatformSpecificImplementation<
-                  AndroidFlutterLocalNotificationsPlugin>()
+                AndroidFlutterLocalNotificationsPlugin
+              >()
               ?.requestNotificationsPermission() ??
           false;
     }
     return await _plugin
             .resolvePlatformSpecificImplementation<
-                IOSFlutterLocalNotificationsPlugin>()
+              IOSFlutterLocalNotificationsPlugin
+            >()
             ?.requestPermissions(alert: true, badge: false, sound: true) ??
         false;
   }
@@ -89,41 +91,70 @@ class Reminders {
         : '${t.priority == model.Priority.high ? '🔴 High priority · ' : ''}Time to get it done.';
 
     tz.TZDateTime first(DateTime from, {int? weekday}) {
-      var x = tz.TZDateTime(tz.local, from.year, from.month, from.day, m ~/ 60, m % 60);
+      var x = tz.TZDateTime(
+        tz.local,
+        from.year,
+        from.month,
+        from.day,
+        m ~/ 60,
+        m % 60,
+      );
       while (x.isBefore(now) || (weekday != null && x.weekday != weekday)) {
-        x = tz.TZDateTime(tz.local, x.year, x.month, x.day + 1, x.hour, x.minute);
+        x = tz.TZDateTime(
+          tz.local,
+          x.year,
+          x.month,
+          x.day + 1,
+          x.hour,
+          x.minute,
+        );
       }
       return x;
     }
 
-    Future<void> sched(int slot, tz.TZDateTime when, DateTimeComponents? match) =>
-        _plugin.zonedSchedule(
-          id: t.notificationId * 10 + slot,
-          scheduledDate: when,
-          notificationDetails: _details,
-          androidScheduleMode: AndroidScheduleMode.inexactAllowWhileIdle,
-          title: title,
-          body: body,
-          matchDateTimeComponents: match,
-        );
+    Future<void> sched(
+      int slot,
+      tz.TZDateTime when,
+      DateTimeComponents? match,
+    ) => _plugin.zonedSchedule(
+      id: t.notificationId * 10 + slot,
+      scheduledDate: when,
+      notificationDetails: _details,
+      androidScheduleMode: AndroidScheduleMode.inexactAllowWhileIdle,
+      title: title,
+      body: body,
+      matchDateTimeComponents: match,
+    );
 
     try {
       final start = t.date.isAfter(now) ? t.date : now;
       switch (t.repeat) {
         case Repeat.none:
           final when = tz.TZDateTime(
-              tz.local, t.date.year, t.date.month, t.date.day, m ~/ 60, m % 60);
+            tz.local,
+            t.date.year,
+            t.date.month,
+            t.date.day,
+            m ~/ 60,
+            m % 60,
+          );
           if (when.isAfter(now)) await sched(0, when, null);
         case Repeat.daily:
           await sched(0, first(start), DateTimeComponents.time);
         case Repeat.weekdays:
           for (var wd = 1; wd <= 5; wd++) {
-            await sched(wd, first(start, weekday: wd),
-                DateTimeComponents.dayOfWeekAndTime);
+            await sched(
+              wd,
+              first(start, weekday: wd),
+              DateTimeComponents.dayOfWeekAndTime,
+            );
           }
         case Repeat.weekly:
-          await sched(0, first(start, weekday: t.date.weekday),
-              DateTimeComponents.dayOfWeekAndTime);
+          await sched(
+            0,
+            first(start, weekday: t.date.weekday),
+            DateTimeComponents.dayOfWeekAndTime,
+          );
       }
     } catch (e) {
       debugPrint('Scheduling failed: $e');
@@ -134,7 +165,11 @@ class Reminders {
   static const _focusId = 2147480000;
 
   /// Alerts when a focus session ends while the app is in the background.
-  Future<void> scheduleFocusEnd(DateTime when, String title, String body) async {
+  Future<void> scheduleFocusEnd(
+    DateTime when,
+    String title,
+    String body,
+  ) async {
     if (!_ready || !when.isAfter(DateTime.now())) return;
     try {
       await _plugin.zonedSchedule(

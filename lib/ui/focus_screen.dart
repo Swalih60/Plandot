@@ -21,27 +21,32 @@ import 'widgets/confetti.dart';
 /// Opens the focus timer for [task] (Pro). Shows the paywall first if needed.
 Future<void> openFocus(BuildContext context, Task task, DateTime day) async {
   if (!context.read<ProService>().isPro) {
-    final ok = await showPaywall(context,
-        reason: 'Focus timer is part of Plandot Pro. Deep-work sessions on any '
-            'task, logged to your insights.');
+    final ok = await showPaywall(
+      context,
+      reason:
+          'Focus timer is part of Plandot Pro. Deep-work sessions on any '
+          'task, logged to your insights.',
+    );
     if (!ok || !context.mounted) return;
   }
   HapticFeedback.mediumImpact();
-  await Navigator.of(context).push(PageRouteBuilder<void>(
-    transitionDuration: T.slow,
-    reverseTransitionDuration: T.med,
-    pageBuilder: (_, _, _) => FocusScreen(task: task, day: day),
-    transitionsBuilder: (_, a, _, child) {
-      final c = CurvedAnimation(parent: a, curve: T.ease);
-      return FadeTransition(
-        opacity: c,
-        child: ScaleTransition(
-          scale: Tween(begin: 0.94, end: 1.0).animate(c),
-          child: child,
-        ),
-      );
-    },
-  ));
+  await Navigator.of(context).push(
+    PageRouteBuilder<void>(
+      transitionDuration: T.slow,
+      reverseTransitionDuration: T.med,
+      pageBuilder: (_, _, _) => FocusScreen(task: task, day: day),
+      transitionsBuilder: (_, a, _, child) {
+        final c = CurvedAnimation(parent: a, curve: T.ease);
+        return FadeTransition(
+          opacity: c,
+          child: ScaleTransition(
+            scale: Tween(begin: 0.94, end: 1.0).animate(c),
+            child: child,
+          ),
+        );
+      },
+    ),
+  );
 }
 
 enum _Phase { focus, rest }
@@ -80,7 +85,9 @@ class _FocusScreenState extends State<FocusScreen>
   late final Ticker _ticker = createTicker((_) => _tick());
   final _elapsedN = ValueNotifier<Duration>(Duration.zero);
   late final AnimationController _breath = AnimationController(
-      vsync: this, duration: const Duration(milliseconds: 4000));
+    vsync: this,
+    duration: const Duration(milliseconds: 4000),
+  );
   final _confetti = ConfettiController();
   late final TaskStore _store;
 
@@ -92,12 +99,14 @@ class _FocusScreenState extends State<FocusScreen>
   Color get _color => _phase == _Phase.rest
       ? _restColor
       : widget.task.priority == Priority.none
-          ? context.pal.accent
-          : priorityColor(widget.task.priority);
+      ? context.pal.accent
+      : priorityColor(widget.task.priority);
 
   Duration _elapsed() =>
       _banked +
-      (_startedAt == null ? Duration.zero : DateTime.now().difference(_startedAt!));
+      (_startedAt == null
+          ? Duration.zero
+          : DateTime.now().difference(_startedAt!));
 
   @override
   void initState() {
@@ -113,7 +122,9 @@ class _FocusScreenState extends State<FocusScreen>
         final end = _startedAt!.add(_total - _banked);
         Reminders.instance.scheduleFocusEnd(
           end,
-          _phase == _Phase.focus ? 'Focus session complete 🎉' : 'Break is over',
+          _phase == _Phase.focus
+              ? 'Focus session complete 🎉'
+              : 'Break is over',
           _phase == _Phase.focus
               ? '$_minutes minutes on "${widget.task.title}". Nicely done.'
               : 'Ready for another round?',
@@ -182,7 +193,10 @@ class _FocusScreenState extends State<FocusScreen>
     _ticker.stop();
     _breath.animateTo(0, duration: T.slow, curve: T.ease);
     HapticFeedback.heavyImpact();
-    Future.delayed(const Duration(milliseconds: 180), HapticFeedback.heavyImpact);
+    Future.delayed(
+      const Duration(milliseconds: 180),
+      HapticFeedback.heavyImpact,
+    );
     if (_phase == _Phase.focus) {
       _logFocus(_minutes);
       _elapsedN.value = _total;
@@ -223,7 +237,8 @@ class _FocusScreenState extends State<FocusScreen>
       // while the tree is locked.
       final mins = _elapsed().inMinutes, store = _store, task = widget.task;
       scheduleMicrotask(
-          () => store.addFocusMinutes(task, dateOnly(DateTime.now()), mins));
+        () => store.addFocusMinutes(task, dateOnly(DateTime.now()), mins),
+      );
     }
     _ticker.dispose();
     _breath.dispose();
@@ -249,8 +264,10 @@ class _FocusScreenState extends State<FocusScreen>
     final todayFocus = task.focusOn(DateTime.now());
     final tag = tagByName(task.tag);
     final screen = MediaQuery.sizeOf(context);
-    final ringSize =
-        math.min(300.0, math.min(screen.width - 72, screen.height * 0.36));
+    final ringSize = math.min(
+      300.0,
+      math.min(screen.width - 72, screen.height * 0.36),
+    );
 
     return Scaffold(
       backgroundColor: pal.bg,
@@ -269,7 +286,9 @@ class _FocusScreenState extends State<FocusScreen>
                       center: const Alignment(0, -0.12),
                       radius: 0.9 + 0.12 * b,
                       colors: [
-                        c.withValues(alpha: (pal.dark ? 0.20 : 0.13) + 0.08 * b),
+                        c.withValues(
+                          alpha: (pal.dark ? 0.20 : 0.13) + 0.08 * b,
+                        ),
                         pal.bg.withValues(alpha: 0),
                       ],
                     ),
@@ -292,7 +311,9 @@ class _FocusScreenState extends State<FocusScreen>
                       ),
                       const Spacer(),
                       _PhasePill(
-                          label: _phase == _Phase.focus ? 'FOCUS' : 'BREAK', color: c),
+                        label: _phase == _Phase.focus ? 'FOCUS' : 'BREAK',
+                        color: c,
+                      ),
                       const Spacer(),
                       const SizedBox(width: 44),
                     ],
@@ -300,16 +321,22 @@ class _FocusScreenState extends State<FocusScreen>
                 ),
                 const SizedBox(height: 22),
                 Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 32),
-                  child: Text(
-                    task.title,
-                    textAlign: TextAlign.center,
-                    maxLines: 2,
-                    overflow: TextOverflow.ellipsis,
-                    style: const TextStyle(
-                        fontSize: 22, fontWeight: FontWeight.w800, letterSpacing: -0.4),
-                  ),
-                ).animate().fadeIn(duration: 400.ms, delay: 120.ms).slideY(begin: 0.2),
+                      padding: const EdgeInsets.symmetric(horizontal: 32),
+                      child: Text(
+                        task.title,
+                        textAlign: TextAlign.center,
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
+                        style: const TextStyle(
+                          fontSize: 22,
+                          fontWeight: FontWeight.w800,
+                          letterSpacing: -0.4,
+                        ),
+                      ),
+                    )
+                    .animate()
+                    .fadeIn(duration: 400.ms, delay: 120.ms)
+                    .slideY(begin: 0.2),
                 if (tag != null || task.priority != Priority.none) ...[
                   const SizedBox(height: 8),
                   Row(
@@ -317,33 +344,42 @@ class _FocusScreenState extends State<FocusScreen>
                     children: [
                       if (task.priority != Priority.none)
                         _MetaChip(
-                            label: '${task.priority.label} priority',
-                            color: priorityColor(task.priority),
-                            dot: true),
+                          label: '${task.priority.label} priority',
+                          color: priorityColor(task.priority),
+                          dot: true,
+                        ),
                       if (tag != null && task.priority != Priority.none)
                         const SizedBox(width: 6),
                       if (tag != null)
                         _MetaChip(
-                            label: '${tag.emoji} ${tag.name}', color: tagColors[tag.color]),
+                          label: '${tag.emoji} ${tag.name}',
+                          color: tagColors[tag.color],
+                        ),
                     ],
                   ).animate().fadeIn(duration: 400.ms, delay: 200.ms),
                 ],
                 const Spacer(),
                 _Ring(
-                  size: ringSize,
-                  elapsed: _elapsedN,
-                  breath: _breath,
-                  total: _total,
-                  color: c,
-                  running: _running,
-                  idleKey: _started ? 'run' : 'idle-$_minutes-${_phase.name}',
-                  caption: _phase == _Phase.focus
-                      ? 'of $_minutes min'
-                      : '$_breakMinutes min break',
-                )
+                      size: ringSize,
+                      elapsed: _elapsedN,
+                      breath: _breath,
+                      total: _total,
+                      color: c,
+                      running: _running,
+                      idleKey: _started
+                          ? 'run'
+                          : 'idle-$_minutes-${_phase.name}',
+                      caption: _phase == _Phase.focus
+                          ? 'of $_minutes min'
+                          : '$_breakMinutes min break',
+                    )
                     .animate()
                     .fadeIn(duration: 500.ms, delay: 80.ms)
-                    .scaleXY(begin: 0.9, curve: Curves.easeOutBack, duration: 600.ms),
+                    .scaleXY(
+                      begin: 0.9,
+                      curve: Curves.easeOutBack,
+                      duration: 600.ms,
+                    ),
                 const Spacer(),
                 SizedBox(
                   height: 54,
@@ -353,8 +389,10 @@ class _FocusScreenState extends State<FocusScreen>
                     transitionBuilder: (child, a) => FadeTransition(
                       opacity: a,
                       child: SlideTransition(
-                        position: Tween(begin: const Offset(0, 0.25), end: Offset.zero)
-                            .animate(a),
+                        position: Tween(
+                          begin: const Offset(0, 0.25),
+                          end: Offset.zero,
+                        ).animate(a),
                         child: child,
                       ),
                     ),
@@ -373,44 +411,50 @@ class _FocusScreenState extends State<FocusScreen>
                           )
                         : Center(
                             key: ValueKey(_status()),
-                            child: Text(_status(),
-                                style: TextStyle(
-                                    color: pal.muted,
-                                    fontWeight: FontWeight.w700,
-                                    fontSize: 15)),
+                            child: Text(
+                              _status(),
+                              style: TextStyle(
+                                color: pal.muted,
+                                fontWeight: FontWeight.w700,
+                                fontSize: 15,
+                              ),
+                            ),
                           ),
                   ),
                 ),
                 const SizedBox(height: 22),
                 Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    AnimatedOpacity(
-                      duration: T.med,
-                      opacity: _started ? 1 : 0.35,
-                      child: _CircleButton(
-                        key: const Key('focus-stop'),
-                        icon: Icons.stop_rounded,
-                        size: 58,
-                        onTap: _started ? _stop : null,
-                      ),
-                    ),
-                    const SizedBox(width: 26),
-                    _PlayButton(
-                      key: const Key('focus-play'),
-                      running: _running,
-                      color: c,
-                      onTap: _running ? _pause : _start,
-                    ),
-                    const SizedBox(width: 26),
-                    _CircleButton(
-                      icon: Icons.check_rounded,
-                      size: 58,
-                      color: task.isDoneOn(widget.day) ? c : null,
-                      onTap: _markDone,
-                    ),
-                  ],
-                ).animate().fadeIn(duration: 400.ms, delay: 260.ms).slideY(begin: 0.3),
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        AnimatedOpacity(
+                          duration: T.med,
+                          opacity: _started ? 1 : 0.35,
+                          child: _CircleButton(
+                            key: const Key('focus-stop'),
+                            icon: Icons.stop_rounded,
+                            size: 58,
+                            onTap: _started ? _stop : null,
+                          ),
+                        ),
+                        const SizedBox(width: 26),
+                        _PlayButton(
+                          key: const Key('focus-play'),
+                          running: _running,
+                          color: c,
+                          onTap: _running ? _pause : _start,
+                        ),
+                        const SizedBox(width: 26),
+                        _CircleButton(
+                          icon: Icons.check_rounded,
+                          size: 58,
+                          color: task.isDoneOn(widget.day) ? c : null,
+                          onTap: _markDone,
+                        ),
+                      ],
+                    )
+                    .animate()
+                    .fadeIn(duration: 400.ms, delay: 260.ms)
+                    .slideY(begin: 0.3),
                 const SizedBox(height: 22),
                 AnimatedSwitcher(
                   duration: T.med,
@@ -420,7 +464,10 @@ class _FocusScreenState extends State<FocusScreen>
                         : '🎯 ${_fmtMinutes(todayFocus)} focused on this today',
                     key: ValueKey(todayFocus),
                     style: TextStyle(
-                        color: pal.muted, fontWeight: FontWeight.w600, fontSize: 13),
+                      color: pal.muted,
+                      fontWeight: FontWeight.w600,
+                      fontSize: 13,
+                    ),
                   ),
                 ),
                 const SizedBox(height: 20),
@@ -509,7 +556,9 @@ class _Ring extends StatelessWidget {
         final left = 1 - (e.inMilliseconds / totalMs).clamp(0.0, 1.0);
         // Round up so the clock reads 25:00 at the start and 00:00 at the end.
         final remaining = Duration(
-            seconds: ((totalMs - e.inMilliseconds).clamp(0, totalMs) / 1000).ceil());
+          seconds: ((totalMs - e.inMilliseconds).clamp(0, totalMs) / 1000)
+              .ceil(),
+        );
         return Transform.scale(
           scale: 1 + 0.025 * b,
           child: SizedBox.square(
@@ -536,7 +585,9 @@ class _Ring extends StatelessWidget {
                         transitionBuilder: (c, a) => FadeTransition(
                           opacity: a,
                           child: ScaleTransition(
-                              scale: Tween(begin: 0.85, end: 1.0).animate(a), child: c),
+                            scale: Tween(begin: 0.85, end: 1.0).animate(a),
+                            child: c,
+                          ),
                         ),
                         child: Text(
                           _clock(remaining),
@@ -552,11 +603,14 @@ class _Ring extends StatelessWidget {
                         ),
                       ),
                       const SizedBox(height: 8),
-                      Text(caption,
-                          style: TextStyle(
-                              color: pal.muted,
-                              fontWeight: FontWeight.w700,
-                              fontSize: 14)),
+                      Text(
+                        caption,
+                        style: TextStyle(
+                          color: pal.muted,
+                          fontWeight: FontWeight.w700,
+                          fontSize: 14,
+                        ),
+                      ),
                     ],
                   ),
                 ),
@@ -588,12 +642,13 @@ class _FocusRingPainter extends CustomPainter {
     final rect = Rect.fromCircle(center: c, radius: r);
 
     canvas.drawCircle(
-        c,
-        r,
-        Paint()
-          ..style = PaintingStyle.stroke
-          ..strokeWidth = stroke
-          ..color = track);
+      c,
+      r,
+      Paint()
+        ..style = PaintingStyle.stroke
+        ..strokeWidth = stroke
+        ..color = track,
+    );
 
     // Minute ticks inside the ring.
     final tp = Paint()..strokeCap = StrokeCap.round;
@@ -620,26 +675,28 @@ class _FocusRingPainter extends CustomPainter {
 
     // Soft glow under the arc.
     canvas.drawArc(
-        rect,
-        -math.pi / 2,
-        sweep,
-        false,
-        Paint()
-          ..style = PaintingStyle.stroke
-          ..strokeWidth = stroke + 6
-          ..strokeCap = StrokeCap.round
-          ..color = color.withValues(alpha: 0.18 + 0.22 * glow)
-          ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 12));
+      rect,
+      -math.pi / 2,
+      sweep,
+      false,
+      Paint()
+        ..style = PaintingStyle.stroke
+        ..strokeWidth = stroke + 6
+        ..strokeCap = StrokeCap.round
+        ..color = color.withValues(alpha: 0.18 + 0.22 * glow)
+        ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 12),
+    );
     canvas.drawArc(
-        rect,
-        -math.pi / 2,
-        sweep,
-        false,
-        Paint()
-          ..style = PaintingStyle.stroke
-          ..strokeWidth = stroke
-          ..strokeCap = StrokeCap.round
-          ..shader = shader);
+      rect,
+      -math.pi / 2,
+      sweep,
+      false,
+      Paint()
+        ..style = PaintingStyle.stroke
+        ..strokeWidth = stroke
+        ..strokeCap = StrokeCap.round
+        ..shader = shader,
+    );
 
     // Leading head.
     final a = -math.pi / 2 + sweep;
@@ -681,12 +738,15 @@ class _PhasePill extends StatelessWidget {
             decoration: BoxDecoration(color: color, shape: BoxShape.circle),
           ),
           const SizedBox(width: 7),
-          Text(label,
-              style: TextStyle(
-                  color: color,
-                  fontWeight: FontWeight.w800,
-                  fontSize: 12,
-                  letterSpacing: 1.4)),
+          Text(
+            label,
+            style: TextStyle(
+              color: color,
+              fontWeight: FontWeight.w800,
+              fontSize: 12,
+              letterSpacing: 1.4,
+            ),
+          ),
         ],
       ),
     );
@@ -718,8 +778,14 @@ class _MetaChip extends StatelessWidget {
             ),
             const SizedBox(width: 5),
           ],
-          Text(label,
-              style: TextStyle(color: color, fontWeight: FontWeight.w700, fontSize: 12)),
+          Text(
+            label,
+            style: TextStyle(
+              color: color,
+              fontWeight: FontWeight.w700,
+              fontSize: 12,
+            ),
+          ),
         ],
       ),
     );
@@ -787,13 +853,20 @@ class _PresetPicker extends StatelessWidget {
                               fontSize: 15,
                               color: m == value ? color : pal.muted,
                             ),
-                            child: Text.rich(TextSpan(children: [
-                              TextSpan(text: '$m'),
-                              const TextSpan(
-                                  text: ' min',
-                                  style: TextStyle(
-                                      fontSize: 11, fontWeight: FontWeight.w700)),
-                            ])),
+                            child: Text.rich(
+                              TextSpan(
+                                children: [
+                                  TextSpan(text: '$m'),
+                                  const TextSpan(
+                                    text: ' min',
+                                    style: TextStyle(
+                                      fontSize: 11,
+                                      fontWeight: FontWeight.w700,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
                           ),
                         ),
                       ),
@@ -832,8 +905,11 @@ class _CircleButton extends StatelessWidget {
         onTap: onTap,
         child: SizedBox.square(
           dimension: size,
-          child: Icon(icon,
-              size: size * 0.44, color: color != null ? Colors.white : pal.ink),
+          child: Icon(
+            icon,
+            size: size * 0.44,
+            color: color != null ? Colors.white : pal.ink,
+          ),
         ),
       ),
     );
@@ -888,7 +964,11 @@ class _PlayButtonState extends State<_PlayButton> {
                 end: Alignment.bottomRight,
                 colors: [
                   c,
-                  Color.lerp(c, pal.dark ? Colors.black : const Color(0xFF1A1033), 0.3)!,
+                  Color.lerp(
+                    c,
+                    pal.dark ? Colors.black : const Color(0xFF1A1033),
+                    0.3,
+                  )!,
                 ],
               ),
               boxShadow: [
@@ -946,90 +1026,127 @@ class _Celebration extends StatelessWidget {
         color: pal.bg.withValues(alpha: 0.55),
         alignment: Alignment.center,
         padding: const EdgeInsets.all(24),
-        child: Container(
-          padding: const EdgeInsets.fromLTRB(22, 26, 22, 14),
-          decoration: BoxDecoration(
-            color: pal.card,
-            borderRadius: BorderRadius.circular(28),
-            border: Border.all(color: pal.line),
-            boxShadow: softShadow(context),
-          ),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Container(
-                width: 74,
-                height: 74,
-                decoration: BoxDecoration(
-                  color: color.withValues(alpha: 0.14),
-                  shape: BoxShape.circle,
-                ),
-                alignment: Alignment.center,
-                child: const Text('🎉', style: TextStyle(fontSize: 36)),
-              )
-                  .animate()
-                  .scaleXY(begin: 0.3, duration: 600.ms, curve: Curves.easeOutBack)
-                  .then()
-                  .shake(hz: 3, rotation: 0.05, duration: 500.ms),
-              const SizedBox(height: 14),
-              const Text('Session complete',
-                  style: TextStyle(
-                      fontSize: 24, fontWeight: FontWeight.w800, letterSpacing: -0.5)),
-              const SizedBox(height: 6),
-              Text(
-                '$minutes minutes of deep focus on\n"$title"',
-                textAlign: TextAlign.center,
-                maxLines: 3,
-                overflow: TextOverflow.ellipsis,
-                style: TextStyle(color: pal.muted, height: 1.4, fontWeight: FontWeight.w600),
-              ),
-              const SizedBox(height: 20),
-              if (!taskDone) ...[
-                FilledButton.icon(
-                  style: FilledButton.styleFrom(backgroundColor: color),
-                  onPressed: onMarkDone,
-                  icon: const Icon(Icons.check_rounded),
-                  label: const Text('Mark task done'),
-                ),
-                const SizedBox(height: 10),
-              ],
-              Material(
-                color: pal.cardAlt,
-                borderRadius: BorderRadius.circular(18),
-                child: InkWell(
-                  borderRadius: BorderRadius.circular(18),
-                  onTap: onBreak,
-                  child: SizedBox(
-                    height: 52,
-                    child: Center(
-                      child: Text('☕  Take a $breakMinutes-min break',
-                          style: const TextStyle(
-                              fontWeight: FontWeight.w700, fontSize: 15)),
-                    ),
+        child:
+            Container(
+                  padding: const EdgeInsets.fromLTRB(22, 26, 22, 14),
+                  decoration: BoxDecoration(
+                    color: pal.card,
+                    borderRadius: BorderRadius.circular(28),
+                    border: Border.all(color: pal.line),
+                    boxShadow: softShadow(context),
                   ),
-                ),
-              ),
-              const SizedBox(height: 4),
-              Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  TextButton(onPressed: onAgain, child: const Text('Another round')),
-                  TextButton(
-                    onPressed: onClose,
-                    style: TextButton.styleFrom(foregroundColor: pal.muted),
-                    child: const Text('Close'),
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children:
+                        [
+                              Container(
+                                    width: 74,
+                                    height: 74,
+                                    decoration: BoxDecoration(
+                                      color: color.withValues(alpha: 0.14),
+                                      shape: BoxShape.circle,
+                                    ),
+                                    alignment: Alignment.center,
+                                    child: const Text(
+                                      '🎉',
+                                      style: TextStyle(fontSize: 36),
+                                    ),
+                                  )
+                                  .animate()
+                                  .scaleXY(
+                                    begin: 0.3,
+                                    duration: 600.ms,
+                                    curve: Curves.easeOutBack,
+                                  )
+                                  .then()
+                                  .shake(
+                                    hz: 3,
+                                    rotation: 0.05,
+                                    duration: 500.ms,
+                                  ),
+                              const SizedBox(height: 14),
+                              const Text(
+                                'Session complete',
+                                style: TextStyle(
+                                  fontSize: 24,
+                                  fontWeight: FontWeight.w800,
+                                  letterSpacing: -0.5,
+                                ),
+                              ),
+                              const SizedBox(height: 6),
+                              Text(
+                                '$minutes minutes of deep focus on\n"$title"',
+                                textAlign: TextAlign.center,
+                                maxLines: 3,
+                                overflow: TextOverflow.ellipsis,
+                                style: TextStyle(
+                                  color: pal.muted,
+                                  height: 1.4,
+                                  fontWeight: FontWeight.w600,
+                                ),
+                              ),
+                              const SizedBox(height: 20),
+                              if (!taskDone) ...[
+                                FilledButton.icon(
+                                  style: FilledButton.styleFrom(
+                                    backgroundColor: color,
+                                  ),
+                                  onPressed: onMarkDone,
+                                  icon: const Icon(Icons.check_rounded),
+                                  label: const Text('Mark task done'),
+                                ),
+                                const SizedBox(height: 10),
+                              ],
+                              Material(
+                                color: pal.cardAlt,
+                                borderRadius: BorderRadius.circular(18),
+                                child: InkWell(
+                                  borderRadius: BorderRadius.circular(18),
+                                  onTap: onBreak,
+                                  child: SizedBox(
+                                    height: 52,
+                                    child: Center(
+                                      child: Text(
+                                        '☕  Take a $breakMinutes-min break',
+                                        style: const TextStyle(
+                                          fontWeight: FontWeight.w700,
+                                          fontSize: 15,
+                                        ),
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                              ),
+                              const SizedBox(height: 4),
+                              Row(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: [
+                                  TextButton(
+                                    onPressed: onAgain,
+                                    child: const Text('Another round'),
+                                  ),
+                                  TextButton(
+                                    onPressed: onClose,
+                                    style: TextButton.styleFrom(
+                                      foregroundColor: pal.muted,
+                                    ),
+                                    child: const Text('Close'),
+                                  ),
+                                ],
+                              ),
+                            ]
+                            .animate(interval: 50.ms, delay: 150.ms)
+                            .fadeIn(duration: 300.ms)
+                            .slideY(begin: 0.15, curve: T.ease),
                   ),
-                ],
-              ),
-            ]
-                .animate(interval: 50.ms, delay: 150.ms)
+                )
+                .animate()
                 .fadeIn(duration: 300.ms)
-                .slideY(begin: 0.15, curve: T.ease),
-          ),
-        )
-            .animate()
-            .fadeIn(duration: 300.ms)
-            .scaleXY(begin: 0.9, duration: 450.ms, curve: Curves.easeOutBack),
+                .scaleXY(
+                  begin: 0.9,
+                  duration: 450.ms,
+                  curve: Curves.easeOutBack,
+                ),
       ),
     ).animate().fadeIn(duration: 250.ms);
   }

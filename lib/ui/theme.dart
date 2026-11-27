@@ -1,4 +1,5 @@
-import 'package:cupertino_ui/cupertino_ui.dart' show CupertinoPageTransitionsBuilder;
+import 'package:cupertino_ui/cupertino_ui.dart'
+    show CupertinoPageTransitionsBuilder;
 import 'package:material_ui/material_ui.dart';
 
 import '../models/task.dart';
@@ -16,11 +17,11 @@ const accents = <(String, Color)>[
 ];
 
 Color priorityColor(Priority p) => switch (p) {
-      Priority.high => const Color(0xFFFF4D57),
-      Priority.medium => const Color(0xFFFFA41B),
-      Priority.low => const Color(0xFF3B9CFF),
-      Priority.none => const Color(0xFFA1A1AA),
-    };
+  Priority.high => const Color(0xFFFF4D57),
+  Priority.medium => const Color(0xFFFFA41B),
+  Priority.low => const Color(0xFF3B9CFF),
+  Priority.none => const Color(0xFFA1A1AA),
+};
 
 const tagColors = <Color>[
   Color(0xFF6366F1),
@@ -98,13 +99,19 @@ ThemeData buildTheme(Brightness b, Color accent) {
       surfaceTintColor: Colors.transparent,
       showDragHandle: true,
       shape: const RoundedRectangleBorder(
-          borderRadius: BorderRadius.vertical(top: Radius.circular(28))),
+        borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
+      ),
     ),
     snackBarTheme: SnackBarThemeData(
       behavior: SnackBarBehavior.floating,
-      backgroundColor: p.dark ? const Color(0xFF2A2D36) : const Color(0xFF14151A),
+      backgroundColor: p.dark
+          ? const Color(0xFF2A2D36)
+          : const Color(0xFF14151A),
       contentTextStyle: const TextStyle(
-          fontFamily: 'Jakarta', color: Colors.white, fontWeight: FontWeight.w600),
+        fontFamily: 'Jakarta',
+        color: Colors.white,
+        fontWeight: FontWeight.w600,
+      ),
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
     ),
     dialogTheme: DialogThemeData(
@@ -117,21 +124,26 @@ ThemeData buildTheme(Brightness b, Color accent) {
         minimumSize: const Size.fromHeight(56),
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(18)),
         textStyle: const TextStyle(
-            fontFamily: 'Jakarta', fontSize: 16, fontWeight: FontWeight.w700),
+          fontFamily: 'Jakarta',
+          fontSize: 16,
+          fontWeight: FontWeight.w700,
+        ),
       ),
     ),
-    pageTransitionsTheme: const PageTransitionsTheme(builders: {
-      TargetPlatform.android: CupertinoPageTransitionsBuilder(),
-      TargetPlatform.iOS: CupertinoPageTransitionsBuilder(),
-    }),
+    pageTransitionsTheme: const PageTransitionsTheme(
+      builders: {
+        TargetPlatform.android: CupertinoPageTransitionsBuilder(),
+        TargetPlatform.iOS: CupertinoPageTransitionsBuilder(),
+      },
+    ),
   );
 }
 
 /// Soft shadow used for floating surfaces.
 List<BoxShadow> softShadow(BuildContext c) => [
-      BoxShadow(
-        color: Colors.black.withValues(alpha: c.pal.dark ? 0.35 : 0.06),
-        blurRadius: 24,
-        offset: const Offset(0, 8),
-      ),
-    ];
+  BoxShadow(
+    color: Colors.black.withValues(alpha: c.pal.dark ? 0.35 : 0.06),
+    blurRadius: 24,
+    offset: const Offset(0, 8),
+  ),
+];

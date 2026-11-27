@@ -118,6 +118,37 @@ class _HomeScreenState extends State<HomeScreen> {
       );
   }
 
+  void _toList(Task t) {
+    final store = context.read<TaskStore>();
+    final (date, repeat, remind, done) = (
+      t.date,
+      t.repeat,
+      t.remind,
+      {...t.doneDays},
+    );
+    Reminders.instance.cancelFor(t);
+    store.moveToList(t);
+    ScaffoldMessenger.of(context)
+      ..hideCurrentSnackBar()
+      ..showSnackBar(
+        SnackBar(
+          content: const Text('Moved to your Tasks list'),
+          action: SnackBarAction(
+            label: 'Undo',
+            onPressed: () {
+              store.moveTo(t, date);
+              t
+                ..repeat = repeat
+                ..remind = remind
+                ..doneDays.addAll(done);
+              store.update(t);
+              Reminders.instance.scheduleFor(t);
+            },
+          ),
+        ),
+      );
+  }
+
   Future<void> _setTimeline(bool v) async {
     final store = context.read<TaskStore>();
     if (v && !context.read<ProService>().isPro) {
@@ -143,6 +174,7 @@ class _HomeScreenState extends State<HomeScreen> {
             onOpen: () => showTaskEditor(context, task: t, day: day),
             onDelete: () => _delete(t),
             onTomorrow: () => _tomorrow(t),
+            onToList: () => _toList(t),
             onFocus: () => openFocus(context, t, day),
           ),
         )

@@ -31,18 +31,21 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
       // Seed a tiny example day so the first screen isn't empty.
       final today = dateOnly(DateTime.now());
       store.addTask(
-          title: 'Swipe me right to complete →',
-          date: today,
-          priority: Priority.high);
+        title: 'Swipe me right to complete →',
+        date: today,
+        priority: Priority.high,
+      );
       store.addTask(
-          title: 'Tap me to add notes & subtasks',
-          date: today,
-          priority: Priority.medium,
-          tag: 'Personal');
+        title: 'Tap me to add notes & subtasks',
+        date: today,
+        priority: Priority.medium,
+        tag: 'Personal',
+      );
       store.addTask(
-          title: 'Try typing "Read 20 min tonight !low"',
-          date: today,
-          priority: Priority.low);
+        title: 'Try typing "Read 20 min tonight !low"',
+        date: today,
+        priority: Priority.low,
+      );
     }
     store.completeOnboarding();
   }
@@ -145,18 +148,34 @@ class _Page extends StatelessWidget {
       padding: const EdgeInsets.symmetric(horizontal: 28),
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          SizedBox(height: 240, child: Center(child: art)),
-          const SizedBox(height: 36),
-          Text(title,
-              textAlign: TextAlign.center,
-              style: const TextStyle(
-                  fontSize: 34, height: 1.1, fontWeight: FontWeight.w800, letterSpacing: -1.2)),
-          const SizedBox(height: 14),
-          Text(body,
-              textAlign: TextAlign.center,
-              style: TextStyle(fontSize: 16, height: 1.45, color: pal.muted)),
-        ].animate(interval: 90.ms).fadeIn(duration: 450.ms).slideY(begin: 0.12, curve: T.ease),
+        children:
+            [
+                  SizedBox(height: 240, child: Center(child: art)),
+                  const SizedBox(height: 36),
+                  Text(
+                    title,
+                    textAlign: TextAlign.center,
+                    style: const TextStyle(
+                      fontSize: 34,
+                      height: 1.1,
+                      fontWeight: FontWeight.w800,
+                      letterSpacing: -1.2,
+                    ),
+                  ),
+                  const SizedBox(height: 14),
+                  Text(
+                    body,
+                    textAlign: TextAlign.center,
+                    style: TextStyle(
+                      fontSize: 16,
+                      height: 1.45,
+                      color: pal.muted,
+                    ),
+                  ),
+                ]
+                .animate(interval: 90.ms)
+                .fadeIn(duration: 450.ms)
+                .slideY(begin: 0.12, curve: T.ease),
       ),
     );
   }
@@ -169,48 +188,52 @@ class _ArtStack extends StatelessWidget {
   Widget build(BuildContext context) {
     final pal = context.pal;
     Widget row(String t, Color c, bool done) => Container(
-          width: 260,
-          margin: const EdgeInsets.only(bottom: 10),
-          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 13),
-          decoration: BoxDecoration(
-            color: pal.card,
-            borderRadius: BorderRadius.circular(18),
-            border: Border.all(color: pal.line),
-            boxShadow: softShadow(context),
+      width: 260,
+      margin: const EdgeInsets.only(bottom: 10),
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 13),
+      decoration: BoxDecoration(
+        color: pal.card,
+        borderRadius: BorderRadius.circular(18),
+        border: Border.all(color: pal.line),
+        boxShadow: softShadow(context),
+      ),
+      child: Row(
+        children: [
+          Container(
+            width: 22,
+            height: 22,
+            decoration: BoxDecoration(
+              shape: BoxShape.circle,
+              color: done ? c : Colors.transparent,
+              border: Border.all(color: c, width: 2),
+            ),
+            child: done
+                ? const Icon(Icons.check_rounded, size: 14, color: Colors.white)
+                : null,
           ),
-          child: Row(
-            children: [
-              Container(
-                width: 22,
-                height: 22,
-                decoration: BoxDecoration(
-                  shape: BoxShape.circle,
-                  color: done ? c : Colors.transparent,
-                  border: Border.all(color: c, width: 2),
-                ),
-                child: done
-                    ? const Icon(Icons.check_rounded, size: 14, color: Colors.white)
-                    : null,
-              ),
-              const SizedBox(width: 12),
-              Text(t,
-                  style: TextStyle(
-                      fontWeight: FontWeight.w700,
-                      color: done ? pal.muted : pal.ink,
-                      decoration: done ? TextDecoration.lineThrough : null)),
-            ],
+          const SizedBox(width: 12),
+          Text(
+            t,
+            style: TextStyle(
+              fontWeight: FontWeight.w700,
+              color: done ? pal.muted : pal.ink,
+              decoration: done ? TextDecoration.lineThrough : null,
+            ),
           ),
-        );
+        ],
+      ),
+    );
     return Column(
       mainAxisSize: MainAxisSize.min,
-      children: [
-        row('Morning run', priorityColor(Priority.medium), true),
-        row('Finish slides', priorityColor(Priority.high), false),
-        row('Buy groceries', priorityColor(Priority.low), false),
-      ]
-          .animate(interval: 150.ms)
-          .fadeIn(duration: 400.ms)
-          .slideX(begin: 0.25, curve: Curves.easeOutBack, duration: 500.ms),
+      children:
+          [
+                row('Morning run', priorityColor(Priority.medium), true),
+                row('Finish slides', priorityColor(Priority.high), false),
+                row('Buy groceries', priorityColor(Priority.low), false),
+              ]
+              .animate(interval: 150.ms)
+              .fadeIn(duration: 400.ms)
+              .slideX(begin: 0.25, curve: Curves.easeOutBack, duration: 500.ms),
     );
   }
 }
@@ -243,17 +266,21 @@ class _ArtPriority extends StatelessWidget {
             ),
             alignment: Alignment.topCenter,
             padding: const EdgeInsets.only(top: 14),
-            child: Text(items[i].label,
-                style: const TextStyle(
-                    color: Colors.white, fontWeight: FontWeight.w800, fontSize: 12)),
-          )
-              .animate()
-              .scaleY(
-                  begin: 0,
-                  alignment: Alignment.bottomCenter,
-                  delay: (i * 120).ms,
-                  duration: 600.ms,
-                  curve: Curves.easeOutBack),
+            child: Text(
+              items[i].label,
+              style: const TextStyle(
+                color: Colors.white,
+                fontWeight: FontWeight.w800,
+                fontSize: 12,
+              ),
+            ),
+          ).animate().scaleY(
+            begin: 0,
+            alignment: Alignment.bottomCenter,
+            delay: (i * 120).ms,
+            duration: 600.ms,
+            curve: Curves.easeOutBack,
+          ),
       ],
     );
   }

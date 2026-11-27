@@ -15,20 +15,32 @@ import 'paywall_screen.dart';
 import 'theme.dart';
 
 /// Opens the add/edit sheet. Returns the saved task (or null).
-Future<Task?> showTaskEditor(BuildContext context,
-    {Task? task, required DateTime day}) {
+Future<Task?> showTaskEditor(
+  BuildContext context, {
+  Task? task,
+  required DateTime day,
+  bool anytime = false,
+}) {
   return showModalBottomSheet<Task>(
     context: context,
     isScrollControlled: true,
     useSafeArea: true,
-    builder: (_) => TaskEditor(task: task, day: day),
+    builder: (_) => TaskEditor(task: task, day: day, anytime: anytime),
   );
 }
 
 class TaskEditor extends StatefulWidget {
-  const TaskEditor({super.key, this.task, required this.day});
+  const TaskEditor({
+    super.key,
+    this.task,
+    required this.day,
+    this.anytime = false,
+  });
   final Task? task;
   final DateTime day;
+
+  /// New task goes to the Tasks list (no particular day) by default.
+  final bool anytime;
 
   @override
   State<TaskEditor> createState() => _TaskEditorState();
@@ -40,13 +52,14 @@ class _TaskEditorState extends State<TaskEditor> {
   final _subCtrl = TextEditingController();
   late Priority _priority = widget.task?.priority ?? Priority.none;
   late DateTime _date = widget.task?.date ?? widget.day;
+  late bool _anytime = widget.task?.anytime ?? widget.anytime;
   late int? _time = widget.task?.timeMinutes;
   late String? _tag = widget.task?.tag;
   late Repeat _repeat = widget.task?.repeat ?? Repeat.none;
   late bool _remind = widget.task?.remind ?? false;
   late final List<Subtask> _subs = [
     for (final s in widget.task?.subtasks ?? const <Subtask>[])
-      Subtask(id: s.id, title: s.title, done: s.done)
+      Subtask(id: s.id, title: s.title, done: s.done),
   ];
   bool _showMore = false;
   ParsedTask? _parsed;
@@ -76,9 +89,12 @@ class _TaskEditorState extends State<TaskEditor> {
   Future<void> _save() async {
     var title = _title.text.trim();
     var date = _date, time = _time, priority = _priority, tag = _tag;
+    var anytime = _anytime;
     final p = _parsed;
     if (!_editing && p != null) {
       title = p.title;
+      if (p.anytime) anytime = true;
+      if (p.date != null) anytime = false;
       date = p.date ?? date;
       time = p.timeMinutes ?? time;
       priority = p.priority ?? priority;
@@ -90,11 +106,19 @@ class _TaskEditorState extends State<TaskEditor> {
     }
     if (_subCtrl.text.trim().isNotEmpty) _addSub();
     final store = context.read<TaskStore>();
-    final remind = _remind && time != null;
+    if (anytime) {
+      // Tasks-list items have no day, so no time, repeat or reminder.
+      time = null;
+      _repeat = Repeat.none;
+    }
+    final remind = !anytime && _remind && time != null;
     if (remind) await Reminders.instance.requestPermission();
     Task t;
     if (_editing) {
-      t = widget.task!
+      final old = widget.task!;
+      if (old.anytime != anytime) old.doneDays.clear();
+      t = old
+        ..anytime = anytime
         ..title = title
         ..notes = _notes.text.trim()
         ..priority = priority
@@ -117,6 +141,7 @@ class _TaskEditorState extends State<TaskEditor> {
         tag: tag,
         repeat: _repeat,
         remind: remind,
+        anytime: anytime,
         subtasks: _subs,
       );
     }
@@ -135,13 +160,68 @@ class _TaskEditorState extends State<TaskEditor> {
   }
 
   Future<void> _pickDate() async {
-    final d = await showDatePicker(
+    final today = dateOnly(DateTime.now());
+    final choice = await showModalBottomSheet<String>(
       context: context,
-      initialDate: _date,
-      firstDate: DateTime(2020),
-      lastDate: DateTime(2100),
+      builder: (ctx) => SafeArea(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            ListTile(
+              leading: const Icon(Icons.today_rounded),
+              title: const Text('Today'),
+              onTap: () => Navigator.pop(ctx, 'today'),
+            ),
+            ListTile(
+              leading: const Icon(Icons.wb_twilight_rounded),
+              title: const Text('Tomorrow'),
+              onTap: () => Navigator.pop(ctx, 'tomorrow'),
+            ),
+            ListTile(
+              leading: const Icon(Icons.calendar_month_rounded),
+              title: const Text('Pick a date…'),
+              onTap: () => Navigator.pop(ctx, 'pick'),
+            ),
+            ListTile(
+              leading: Icon(Icons.inbox_rounded, color: ctx.pal.accent),
+              title: const Text('No date · Tasks list'),
+              subtitle: const Text('Stays on your list until it\'s done'),
+              onTap: () => Navigator.pop(ctx, 'none'),
+            ),
+            const SizedBox(height: 8),
+          ],
+        ),
+      ),
     );
-    if (d != null) setState(() => _date = d);
+    if (!mounted || choice == null) return;
+    HapticFeedback.selectionClick();
+    switch (choice) {
+      case 'today':
+        setState(() {
+          _anytime = false;
+          _date = today;
+        });
+      case 'tomorrow':
+        setState(() {
+          _anytime = false;
+          _date = addDays(today, 1);
+        });
+      case 'none':
+        setState(() => _anytime = true);
+      case 'pick':
+        final d = await showDatePicker(
+          context: context,
+          initialDate: _date,
+          firstDate: DateTime(2020),
+          lastDate: DateTime(2100),
+        );
+        if (d != null) {
+          setState(() {
+            _anytime = false;
+            _date = d;
+          });
+        }
+    }
   }
 
   Future<void> _pickTime() async {
@@ -161,8 +241,10 @@ class _TaskEditorState extends State<TaskEditor> {
   Future<void> _pickRepeat() async {
     final pro = context.read<ProService>();
     if (!pro.isPro) {
-      final ok = await showPaywall(context,
-          reason: 'Repeating tasks are part of Plandot Pro.');
+      final ok = await showPaywall(
+        context,
+        reason: 'Repeating tasks are part of Plandot Pro.',
+      );
       if (!ok) return;
     }
     if (!mounted) return;
@@ -174,9 +256,11 @@ class _TaskEditorState extends State<TaskEditor> {
           children: [
             for (final r in Repeat.values)
               ListTile(
-                title: Text(r == Repeat.weekly
-                    ? 'Every ${DateFormat('EEEE').format(_date)}'
-                    : r.label),
+                title: Text(
+                  r == Repeat.weekly
+                      ? 'Every ${DateFormat('EEEE').format(_date)}'
+                      : r.label,
+                ),
                 trailing: r == _repeat ? const Icon(Icons.check_rounded) : null,
                 onTap: () => Navigator.pop(ctx, r),
               ),
@@ -201,6 +285,9 @@ class _TaskEditorState extends State<TaskEditor> {
     final p = _parsed;
     final effPriority = (!_editing ? p?.priority : null) ?? _priority;
     final effDate = (!_editing ? p?.date : null) ?? _date;
+    final effAnytime = !_editing && p != null
+        ? (p.date != null ? false : (p.anytime || _anytime))
+        : _anytime;
     final effTime = (!_editing ? p?.timeMinutes : null) ?? _time;
     final effTag = (!_editing ? p?.tag : null) ?? _tag;
 
@@ -212,12 +299,17 @@ class _TaskEditorState extends State<TaskEditor> {
           crossAxisAlignment: CrossAxisAlignment.start,
           mainAxisSize: MainAxisSize.min,
           children: [
-            Text(_editing ? 'Edit task' : 'New task',
-                style: TextStyle(
-                    fontSize: 13,
-                    fontWeight: FontWeight.w700,
-                    color: pal.muted,
-                    letterSpacing: 0.4)),
+            Text(
+              _editing
+                  ? 'Edit task'
+                  : (_anytime ? 'New task · Tasks list' : 'New task'),
+              style: TextStyle(
+                fontSize: 13,
+                fontWeight: FontWeight.w700,
+                color: pal.muted,
+                letterSpacing: 0.4,
+              ),
+            ),
             TextField(
               controller: _title,
               autofocus: !_editing,
@@ -226,10 +318,15 @@ class _TaskEditorState extends State<TaskEditor> {
               onSubmitted: (_) => _save(),
               maxLines: null,
               style: const TextStyle(
-                  fontSize: 22, fontWeight: FontWeight.w700, letterSpacing: -0.3),
+                fontSize: 22,
+                fontWeight: FontWeight.w700,
+                letterSpacing: -0.3,
+              ),
               decoration: InputDecoration(
                 border: InputBorder.none,
-                hintText: _editing ? 'Task name' : 'Try "Gym tomorrow 7am !high"',
+                hintText: _editing
+                    ? 'Task name'
+                    : 'Try "Gym tomorrow 7am !high"',
                 hintStyle: TextStyle(color: pal.muted.withValues(alpha: 0.6)),
               ),
             ),
@@ -244,19 +341,28 @@ class _TaskEditorState extends State<TaskEditor> {
                       child: Wrap(
                         spacing: 6,
                         runSpacing: 6,
-                        children: [
-                          if (p.date != null) _Token('📅 ${_dateLabel(p.date!)}'),
-                          if (p.timeMinutes != null)
-                            _Token('⏰ ${formatMinutes(p.timeMinutes!)}'),
-                          if (p.priority != null)
-                            _Token('● ${p.priority!.label}',
-                                color: priorityColor(p.priority!)),
-                          if (p.tag != null)
-                            _Token('${tagByName(p.tag)!.emoji} ${p.tag}'),
-                        ]
-                            .animate(interval: 40.ms)
-                            .fadeIn(duration: 200.ms)
-                            .scaleXY(begin: 0.8, curve: Curves.easeOutBack),
+                        children:
+                            [
+                                  if (p.date != null)
+                                    _Token('📅 ${_dateLabel(p.date!)}'),
+                                  if (p.anytime) const _Token('📥 Tasks list'),
+                                  if (p.timeMinutes != null)
+                                    _Token(
+                                      '⏰ ${formatMinutes(p.timeMinutes!)}',
+                                    ),
+                                  if (p.priority != null)
+                                    _Token(
+                                      '● ${p.priority!.label}',
+                                      color: priorityColor(p.priority!),
+                                    ),
+                                  if (p.tag != null)
+                                    _Token(
+                                      '${tagByName(p.tag)!.emoji} ${p.tag}',
+                                    ),
+                                ]
+                                .animate(interval: 40.ms)
+                                .fadeIn(duration: 200.ms)
+                                .scaleXY(begin: 0.8, curve: Curves.easeOutBack),
                       ),
                     ),
             ),
@@ -265,13 +371,20 @@ class _TaskEditorState extends State<TaskEditor> {
               maxLines: null,
               minLines: 1,
               textCapitalization: TextCapitalization.sentences,
-              style: TextStyle(fontSize: 15, color: pal.ink.withValues(alpha: 0.85)),
+              style: TextStyle(
+                fontSize: 15,
+                color: pal.ink.withValues(alpha: 0.85),
+              ),
               decoration: InputDecoration(
                 border: InputBorder.none,
                 isDense: true,
                 hintText: 'Add notes',
                 hintStyle: TextStyle(color: pal.muted.withValues(alpha: 0.6)),
-                prefixIcon: Icon(Icons.notes_rounded, size: 18, color: pal.muted),
+                prefixIcon: Icon(
+                  Icons.notes_rounded,
+                  size: 18,
+                  color: pal.muted,
+                ),
                 prefixIconConstraints: const BoxConstraints(minWidth: 28),
               ),
             ),
@@ -296,35 +409,39 @@ class _TaskEditorState extends State<TaskEditor> {
               child: Row(
                 children: [
                   _Pill(
-                    icon: Icons.event_rounded,
-                    label: _dateLabel(effDate),
+                    icon: effAnytime
+                        ? Icons.inbox_rounded
+                        : Icons.event_rounded,
+                    label: effAnytime ? 'No date' : _dateLabel(effDate),
                     active: true,
                     onTap: _pickDate,
                   ),
-                  _Pill(
-                    icon: Icons.schedule_rounded,
-                    label: effTime == null ? 'Time' : formatMinutes(effTime),
-                    active: effTime != null,
-                    onTap: _pickTime,
-                    onClear: effTime == null
-                        ? null
-                        : () => setState(() {
+                  if (!effAnytime)
+                    _Pill(
+                      icon: Icons.schedule_rounded,
+                      label: effTime == null ? 'Time' : formatMinutes(effTime),
+                      active: effTime != null,
+                      onTap: _pickTime,
+                      onClear: effTime == null
+                          ? null
+                          : () => setState(() {
                               _time = null;
                               _remind = false;
                             }),
-                  ),
+                    ),
                   _Pill(
                     icon: Icons.local_offer_rounded,
                     label: effTag ?? 'Tag',
                     active: effTag != null,
                     onTap: () => setState(() => _showMore = true),
                   ),
-                  _Pill(
-                    icon: Icons.repeat_rounded,
-                    label: _repeat == Repeat.none ? 'Repeat' : _repeat.label,
-                    active: _repeat != Repeat.none,
-                    onTap: _pickRepeat,
-                  ),
+                  if (!effAnytime)
+                    _Pill(
+                      icon: Icons.repeat_rounded,
+                      label: _repeat == Repeat.none ? 'Repeat' : _repeat.label,
+                      active: _repeat != Repeat.none,
+                      onTap: _pickRepeat,
+                    ),
                 ],
               ),
             ),
@@ -355,13 +472,17 @@ class _TaskEditorState extends State<TaskEditor> {
                                 label: Text('${t.emoji} ${t.name}'),
                                 selected: effTag == t.name,
                                 showCheckmark: false,
-                                selectedColor: tagColors[t.color].withValues(alpha: 0.2),
+                                selectedColor: tagColors[t.color].withValues(
+                                  alpha: 0.2,
+                                ),
                                 side: BorderSide(
-                                    color: effTag == t.name
-                                        ? tagColors[t.color]
-                                        : pal.line),
+                                  color: effTag == t.name
+                                      ? tagColors[t.color]
+                                      : pal.line,
+                                ),
                                 shape: RoundedRectangleBorder(
-                                    borderRadius: BorderRadius.circular(999)),
+                                  borderRadius: BorderRadius.circular(999),
+                                ),
                                 onSelected: (v) {
                                   HapticFeedback.selectionClick();
                                   setState(() => _tag = v ? t.name : null);
@@ -373,28 +494,38 @@ class _TaskEditorState extends State<TaskEditor> {
                         _Label('SUBTASKS'),
                         for (final s in _subs)
                           Row(
-                            key: ValueKey(s.id),
-                            children: [
-                              Checkbox(
-                                value: s.done,
-                                shape: const CircleBorder(),
-                                onChanged: (v) => setState(() => s.done = v!),
-                              ),
-                              Expanded(
-                                child: Text(s.title,
-                                    style: TextStyle(
-                                      decoration: s.done
-                                          ? TextDecoration.lineThrough
-                                          : null,
-                                      color: s.done ? pal.muted : pal.ink,
-                                    )),
-                              ),
-                              IconButton(
-                                icon: const Icon(Icons.close_rounded, size: 18),
-                                onPressed: () => setState(() => _subs.remove(s)),
-                              ),
-                            ],
-                          ).animate().fadeIn(duration: 200.ms).slideX(begin: 0.05),
+                                key: ValueKey(s.id),
+                                children: [
+                                  Checkbox(
+                                    value: s.done,
+                                    shape: const CircleBorder(),
+                                    onChanged: (v) =>
+                                        setState(() => s.done = v!),
+                                  ),
+                                  Expanded(
+                                    child: Text(
+                                      s.title,
+                                      style: TextStyle(
+                                        decoration: s.done
+                                            ? TextDecoration.lineThrough
+                                            : null,
+                                        color: s.done ? pal.muted : pal.ink,
+                                      ),
+                                    ),
+                                  ),
+                                  IconButton(
+                                    icon: const Icon(
+                                      Icons.close_rounded,
+                                      size: 18,
+                                    ),
+                                    onPressed: () =>
+                                        setState(() => _subs.remove(s)),
+                                  ),
+                                ],
+                              )
+                              .animate()
+                              .fadeIn(duration: 200.ms)
+                              .slideX(begin: 0.05),
                         TextField(
                           controller: _subCtrl,
                           onSubmitted: (_) => _addSub(),
@@ -403,14 +534,19 @@ class _TaskEditorState extends State<TaskEditor> {
                             isDense: true,
                             border: InputBorder.none,
                             hintText: 'Add a step',
-                            prefixIcon: Icon(Icons.add_rounded, color: pal.accent),
+                            prefixIcon: Icon(
+                              Icons.add_rounded,
+                              color: pal.accent,
+                            ),
                           ),
                         ),
-                        if (_time != null)
+                        if (_time != null && !effAnytime)
                           SwitchListTile(
                             contentPadding: EdgeInsets.zero,
-                            title: const Text('Remind me',
-                                style: TextStyle(fontWeight: FontWeight.w600)),
+                            title: const Text(
+                              'Remind me',
+                              style: TextStyle(fontWeight: FontWeight.w600),
+                            ),
                             subtitle: Text('At ${formatMinutes(_time!)}'),
                             value: _remind,
                             onChanged: (v) => setState(() => _remind = v),
@@ -477,14 +613,17 @@ class _Label extends StatelessWidget {
   final String text;
   @override
   Widget build(BuildContext context) => Padding(
-        padding: const EdgeInsets.only(bottom: 8),
-        child: Text(text,
-            style: TextStyle(
-                fontSize: 12,
-                fontWeight: FontWeight.w800,
-                letterSpacing: 0.6,
-                color: context.pal.muted)),
-      );
+    padding: const EdgeInsets.only(bottom: 8),
+    child: Text(
+      text,
+      style: TextStyle(
+        fontSize: 12,
+        fontWeight: FontWeight.w800,
+        letterSpacing: 0.6,
+        color: context.pal.muted,
+      ),
+    ),
+  );
 }
 
 class _Token extends StatelessWidget {
@@ -500,8 +639,10 @@ class _Token extends StatelessWidget {
         color: c.withValues(alpha: 0.13),
         borderRadius: BorderRadius.circular(999),
       ),
-      child: Text(text,
-          style: TextStyle(color: c, fontWeight: FontWeight.w700, fontSize: 12.5)),
+      child: Text(
+        text,
+        style: TextStyle(color: c, fontWeight: FontWeight.w700, fontSize: 12.5),
+      ),
     );
   }
 }
@@ -538,16 +679,23 @@ class _Pill extends StatelessWidget {
               children: [
                 Icon(icon, size: 16, color: active ? pal.accent : pal.muted),
                 const SizedBox(width: 6),
-                Text(label,
-                    style: TextStyle(
-                        fontWeight: FontWeight.w700,
-                        fontSize: 13,
-                        color: active ? pal.accent : pal.ink)),
+                Text(
+                  label,
+                  style: TextStyle(
+                    fontWeight: FontWeight.w700,
+                    fontSize: 13,
+                    color: active ? pal.accent : pal.ink,
+                  ),
+                ),
                 if (onClear != null) ...[
                   const SizedBox(width: 4),
                   GestureDetector(
                     onTap: onClear,
-                    child: Icon(Icons.close_rounded, size: 15, color: pal.accent),
+                    child: Icon(
+                      Icons.close_rounded,
+                      size: 15,
+                      color: pal.accent,
+                    ),
                   ),
                 ],
               ],
@@ -574,73 +722,79 @@ class _PriorityPicker extends StatelessWidget {
         color: pal.cardAlt,
         borderRadius: BorderRadius.circular(16),
       ),
-      child: LayoutBuilder(builder: (context, c) {
-        final w = c.maxWidth / order.length;
-        final i = order.indexOf(value);
-        return Stack(
-          children: [
-            AnimatedPositioned(
-              duration: const Duration(milliseconds: 340),
-              curve: Curves.easeOutBack,
-              left: i * w,
-              top: 0,
-              bottom: 0,
-              width: w,
-              child: AnimatedContainer(
-                duration: T.med,
-                decoration: BoxDecoration(
-                  color: value == Priority.none ? pal.card : priorityColor(value),
-                  borderRadius: BorderRadius.circular(12),
-                  boxShadow: softShadow(context),
+      child: LayoutBuilder(
+        builder: (context, c) {
+          final w = c.maxWidth / order.length;
+          final i = order.indexOf(value);
+          return Stack(
+            children: [
+              AnimatedPositioned(
+                duration: const Duration(milliseconds: 340),
+                curve: Curves.easeOutBack,
+                left: i * w,
+                top: 0,
+                bottom: 0,
+                width: w,
+                child: AnimatedContainer(
+                  duration: T.med,
+                  decoration: BoxDecoration(
+                    color: value == Priority.none
+                        ? pal.card
+                        : priorityColor(value),
+                    borderRadius: BorderRadius.circular(12),
+                    boxShadow: softShadow(context),
+                  ),
                 ),
               ),
-            ),
-            Row(
-              children: [
-                for (final p in order)
-                  SizedBox(
-                    width: w,
-                    height: 42,
-                    child: GestureDetector(
-                      behavior: HitTestBehavior.opaque,
-                      onTap: () => onChanged(p),
-                      child: Center(
-                        child: Row(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            if (p != Priority.none)
-                              AnimatedContainer(
-                                duration: T.med,
-                                width: 8,
-                                height: 8,
-                                margin: const EdgeInsets.only(right: 6),
-                                decoration: BoxDecoration(
-                                  shape: BoxShape.circle,
-                                  color: p == value ? Colors.white : priorityColor(p),
+              Row(
+                children: [
+                  for (final p in order)
+                    SizedBox(
+                      width: w,
+                      height: 42,
+                      child: GestureDetector(
+                        behavior: HitTestBehavior.opaque,
+                        onTap: () => onChanged(p),
+                        child: Center(
+                          child: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              if (p != Priority.none)
+                                AnimatedContainer(
+                                  duration: T.med,
+                                  width: 8,
+                                  height: 8,
+                                  margin: const EdgeInsets.only(right: 6),
+                                  decoration: BoxDecoration(
+                                    shape: BoxShape.circle,
+                                    color: p == value
+                                        ? Colors.white
+                                        : priorityColor(p),
+                                  ),
                                 ),
+                              AnimatedDefaultTextStyle(
+                                duration: T.fast,
+                                style: TextStyle(
+                                  fontFamily: 'Jakarta',
+                                  fontWeight: FontWeight.w700,
+                                  fontSize: 13,
+                                  color: p == value && p != Priority.none
+                                      ? Colors.white
+                                      : pal.ink,
+                                ),
+                                child: Text(p.label),
                               ),
-                            AnimatedDefaultTextStyle(
-                              duration: T.fast,
-                              style: TextStyle(
-                                fontFamily: 'Jakarta',
-                                fontWeight: FontWeight.w700,
-                                fontSize: 13,
-                                color: p == value && p != Priority.none
-                                    ? Colors.white
-                                    : pal.ink,
-                              ),
-                              child: Text(p.label),
-                            ),
-                          ],
+                            ],
+                          ),
                         ),
                       ),
                     ),
-                  ),
-              ],
-            ),
-          ],
-        );
-      }),
+                ],
+              ),
+            ],
+          );
+        },
+      ),
     );
   }
 }

@@ -7,8 +7,8 @@ import 'data/task_store.dart';
 import 'services/pro_service.dart';
 import 'services/reminders.dart';
 import 'ui/focus_screen.dart';
-import 'ui/home_screen.dart';
 import 'ui/onboarding_screen.dart';
+import 'ui/root_shell.dart';
 import 'ui/splash.dart';
 import 'ui/stats_screen.dart';
 import 'ui/task_editor.dart';
@@ -27,6 +27,7 @@ Widget? _shotScreen(TaskStore s) {
     'focus' => FocusScreen(task: tasks.first, day: today),
     'stats' => const StatsScreen(),
     'edit' => _EditShot(task: tasks.first, day: today),
+    'tasks' => const RootShell(initialTab: 1),
     _ => null,
   };
 }
@@ -49,7 +50,7 @@ class _EditShotState extends State<_EditShot> {
   }
 
   @override
-  Widget build(BuildContext context) => const HomeScreen();
+  Widget build(BuildContext context) => const RootShell();
 }
 
 Future<void> main() async {
@@ -96,7 +97,7 @@ class TicklistApp extends StatelessWidget {
                   child: AnimatedSwitcher(
                     duration: const Duration(milliseconds: 500),
                     child: s.onboarded
-                        ? const HomeScreen(key: ValueKey('home'))
+                        ? const RootShell(key: ValueKey('home'))
                         : const OnboardingScreen(key: ValueKey('onboarding')),
                   ),
                 ),

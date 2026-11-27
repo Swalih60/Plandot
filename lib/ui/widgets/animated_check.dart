@@ -31,7 +31,9 @@ class _AnimatedCheckState extends State<AnimatedCheck>
     value: widget.checked ? 1 : 0,
   );
   late final AnimationController _ripple = AnimationController(
-      vsync: this, duration: const Duration(milliseconds: 520));
+    vsync: this,
+    duration: const Duration(milliseconds: 520),
+  );
 
   @override
   void didUpdateWidget(AnimatedCheck old) {
@@ -77,8 +79,9 @@ class _AnimatedCheckState extends State<AnimatedCheck>
             animation: Listenable.merge([_c, _ripple]),
             builder: (context, _) {
               final fill = Curves.easeOutBack.transform(_c.value.clamp(0, 1));
-              final tick = Curves.easeOutCubic
-                  .transform(((_c.value - 0.25) / 0.75).clamp(0.0, 1.0));
+              final tick = Curves.easeOutCubic.transform(
+                ((_c.value - 0.25) / 0.75).clamp(0.0, 1.0),
+              );
               return Stack(
                 alignment: Alignment.center,
                 children: [
@@ -89,8 +92,9 @@ class _AnimatedCheckState extends State<AnimatedCheck>
                       decoration: BoxDecoration(
                         shape: BoxShape.circle,
                         border: Border.all(
-                          color: widget.color
-                              .withValues(alpha: (1 - _ripple.value) * 0.6),
+                          color: widget.color.withValues(
+                            alpha: (1 - _ripple.value) * 0.6,
+                          ),
                           width: 2.5 * (1 - _ripple.value) + 0.5,
                         ),
                       ),
@@ -114,10 +118,7 @@ class _AnimatedCheckState extends State<AnimatedCheck>
                       ),
                     ),
                   ),
-                  CustomPaint(
-                    size: Size(s, s),
-                    painter: _TickPainter(tick),
-                  ),
+                  CustomPaint(size: Size(s, s), painter: _TickPainter(tick)),
                 ],
               );
             },

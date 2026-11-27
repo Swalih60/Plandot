@@ -39,8 +39,9 @@ class StatsScreen extends StatelessWidget {
         topFocus = t;
       }
     }
-    final maxDone =
-        weekProg.fold<int>(1, (m, p) => p.$1 > m ? p.$1 : m).toDouble();
+    final maxDone = weekProg
+        .fold<int>(1, (m, p) => p.$1 > m ? p.$1 : m)
+        .toDouble();
 
     // Last 30 days for insights
     var done30 = 0, total30 = 0;
@@ -63,10 +64,14 @@ class StatsScreen extends StatelessWidget {
     }
     final bestDay = byWeekday.every((x) => x == 0)
         ? null
-        : weekdayShort[byWeekday.indexOf(byWeekday.reduce((a, b) => a > b ? a : b))];
+        : weekdayShort[byWeekday.indexOf(
+            byWeekday.reduce((a, b) => a > b ? a : b),
+          )];
     final topTag = byTag.isEmpty
         ? null
-        : (byTag.entries.toList()..sort((a, b) => b.value.compareTo(a.value))).first.key;
+        : (byTag.entries.toList()..sort((a, b) => b.value.compareTo(a.value)))
+              .first
+              .key;
 
     final insights = Column(
       children: [
@@ -74,7 +79,12 @@ class StatsScreen extends StatelessWidget {
           title: 'Priority breakdown · 30 days',
           child: Column(
             children: [
-              for (final p in [Priority.high, Priority.medium, Priority.low, Priority.none])
+              for (final p in [
+                Priority.high,
+                Priority.medium,
+                Priority.low,
+                Priority.none,
+              ])
                 Padding(
                   padding: const EdgeInsets.symmetric(vertical: 7),
                   child: Row(
@@ -83,21 +93,27 @@ class StatsScreen extends StatelessWidget {
                         width: 10,
                         height: 10,
                         decoration: BoxDecoration(
-                            color: priorityColor(p), shape: BoxShape.circle),
+                          color: priorityColor(p),
+                          shape: BoxShape.circle,
+                        ),
                       ),
                       const SizedBox(width: 10),
                       SizedBox(
-                          width: 64,
-                          child: Text(p.label,
-                              style: const TextStyle(fontWeight: FontWeight.w700))),
+                        width: 64,
+                        child: Text(
+                          p.label,
+                          style: const TextStyle(fontWeight: FontWeight.w700),
+                        ),
+                      ),
                       Expanded(
                         child: ClipRRect(
                           borderRadius: BorderRadius.circular(8),
                           child: TweenAnimationBuilder<double>(
                             tween: Tween(
-                                end: byPriority[p]!.$2 == 0
-                                    ? 0
-                                    : byPriority[p]!.$1 / byPriority[p]!.$2),
+                              end: byPriority[p]!.$2 == 0
+                                  ? 0
+                                  : byPriority[p]!.$1 / byPriority[p]!.$2,
+                            ),
                             duration: 800.ms,
                             curve: Curves.easeOutCubic,
                             builder: (_, v, _) => LinearProgressIndicator(
@@ -110,9 +126,13 @@ class StatsScreen extends StatelessWidget {
                         ),
                       ),
                       const SizedBox(width: 10),
-                      Text('${byPriority[p]!.$1}/${byPriority[p]!.$2}',
-                          style: TextStyle(
-                              color: pal.muted, fontWeight: FontWeight.w700)),
+                      Text(
+                        '${byPriority[p]!.$1}/${byPriority[p]!.$2}',
+                        style: TextStyle(
+                          color: pal.muted,
+                          fontWeight: FontWeight.w700,
+                        ),
+                      ),
                     ],
                   ),
                 ),
@@ -123,8 +143,11 @@ class StatsScreen extends StatelessWidget {
         Row(
           children: [
             _Tile(
-                value: total30 == 0 ? '–' : '${(done30 * 100 / total30).round()}%',
-                label: '30-day completion'),
+              value: total30 == 0
+                  ? '–'
+                  : '${(done30 * 100 / total30).round()}%',
+              label: '30-day completion',
+            ),
             const SizedBox(width: 10),
             _Tile(value: bestDay ?? '–', label: 'Most productive day'),
           ],
@@ -133,8 +156,11 @@ class StatsScreen extends StatelessWidget {
         Row(
           children: [
             _Tile(
-                value: topTag == null ? '–' : '${tagByName(topTag)!.emoji} $topTag',
-                label: 'Top area'),
+              value: topTag == null
+                  ? '–'
+                  : '${tagByName(topTag)!.emoji} $topTag',
+              label: 'Top area',
+            ),
             const SizedBox(width: 10),
             _Tile(value: '$done30', label: 'Tasks done · 30 days'),
           ],
@@ -152,9 +178,10 @@ class StatsScreen extends StatelessWidget {
               _Tile(value: '$weekDone', label: 'Done this week', big: true),
               const SizedBox(width: 10),
               _Tile(
-                  value: '🔥 ${store.perfectDayStreak()}',
-                  label: 'Perfect-day streak',
-                  big: true),
+                value: '🔥 ${store.perfectDayStreak()}',
+                label: 'Perfect-day streak',
+                big: true,
+              ),
             ],
           ),
           const SizedBox(height: 12),
@@ -173,11 +200,14 @@ class StatsScreen extends StatelessWidget {
                       child: Column(
                         mainAxisAlignment: MainAxisAlignment.end,
                         children: [
-                          Text('${weekProg[i].$1}',
-                              style: TextStyle(
-                                  fontSize: 12,
-                                  fontWeight: FontWeight.w800,
-                                  color: pal.muted)),
+                          Text(
+                            '${weekProg[i].$1}',
+                            style: TextStyle(
+                              fontSize: 12,
+                              fontWeight: FontWeight.w800,
+                              color: pal.muted,
+                            ),
+                          ),
                           const SizedBox(height: 4),
                           TweenAnimationBuilder<double>(
                             tween: Tween(end: weekProg[i].$1 / maxDone),
@@ -203,8 +233,9 @@ class StatsScreen extends StatelessWidget {
                           Text(
                             DateFormat('E').format(week[i]).substring(0, 1),
                             style: TextStyle(
-                                fontWeight: FontWeight.w700,
-                                color: i == 6 ? pal.accent : pal.muted),
+                              fontWeight: FontWeight.w700,
+                              color: i == 6 ? pal.accent : pal.muted,
+                            ),
                           ),
                         ],
                       ),
@@ -244,27 +275,40 @@ class StatsScreen extends StatelessWidget {
                                   mainAxisAlignment: MainAxisAlignment.end,
                                   children: [
                                     TweenAnimationBuilder<double>(
-                                      tween: Tween(end: weekFocus[i] / maxFocus),
-                                      duration: Duration(milliseconds: 600 + i * 60),
+                                      tween: Tween(
+                                        end: weekFocus[i] / maxFocus,
+                                      ),
+                                      duration: Duration(
+                                        milliseconds: 600 + i * 60,
+                                      ),
                                       curve: Curves.easeOutCubic,
                                       builder: (_, v, _) => Container(
                                         height: 4 + 64 * v.clamp(0.0, 1.0),
-                                        margin: const EdgeInsets.symmetric(horizontal: 8),
+                                        margin: const EdgeInsets.symmetric(
+                                          horizontal: 8,
+                                        ),
                                         decoration: BoxDecoration(
                                           color: weekFocus[i] == 0
                                               ? pal.cardAlt
                                               : const Color(0xFF10B981)
-                                                  .withValues(alpha: 0.35 + 0.65 * v),
-                                          borderRadius: BorderRadius.circular(8),
+                                                    .withValues(
+                                                      alpha: 0.35 + 0.65 * v,
+                                                    ),
+                                          borderRadius: BorderRadius.circular(
+                                            8,
+                                          ),
                                         ),
                                       ),
                                     ),
                                     const SizedBox(height: 8),
                                     Text(
-                                      DateFormat('E').format(week[i]).substring(0, 1),
+                                      DateFormat('E')
+                                          .format(week[i])
+                                          .substring(0, 1),
                                       style: TextStyle(
-                                          fontWeight: FontWeight.w700,
-                                          color: i == 6 ? pal.accent : pal.muted),
+                                        fontWeight: FontWeight.w700,
+                                        color: i == 6 ? pal.accent : pal.muted,
+                                      ),
                                     ),
                                   ],
                                 ),
@@ -275,15 +319,21 @@ class StatsScreen extends StatelessWidget {
                       if (topFocus != null) ...[
                         const SizedBox(height: 14),
                         Text.rich(
-                          TextSpan(children: [
-                            const TextSpan(text: '🎯  Most focus: '),
-                            TextSpan(
+                          TextSpan(
+                            children: [
+                              const TextSpan(text: '🎯  Most focus: '),
+                              TextSpan(
                                 text: topFocus.title,
-                                style: const TextStyle(fontWeight: FontWeight.w800)),
-                            TextSpan(
+                                style: const TextStyle(
+                                  fontWeight: FontWeight.w800,
+                                ),
+                              ),
+                              TextSpan(
                                 text: ' · ${_fmtFocus(topFocusMin)}',
-                                style: TextStyle(color: pal.muted)),
-                          ]),
+                                style: TextStyle(color: pal.muted),
+                              ),
+                            ],
+                          ),
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
                           style: const TextStyle(fontWeight: FontWeight.w600),
@@ -297,8 +347,11 @@ class StatsScreen extends StatelessWidget {
             insights
           else
             GestureDetector(
-              onTap: () => showPaywall(context,
-                  reason: 'See your priority breakdown, best days and focus areas.'),
+              onTap: () => showPaywall(
+                context,
+                reason:
+                    'See your priority breakdown, best days and focus areas.',
+              ),
               child: Stack(
                 children: [
                   ImageFiltered(
@@ -307,29 +360,48 @@ class StatsScreen extends StatelessWidget {
                   ),
                   Positioned.fill(
                     child: Center(
-                      child: Container(
-                        padding:
-                            const EdgeInsets.symmetric(horizontal: 22, vertical: 16),
-                        decoration: BoxDecoration(
-                          color: pal.card,
-                          borderRadius: BorderRadius.circular(20),
-                          boxShadow: softShadow(context),
-                        ),
-                        child: Column(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            Icon(Icons.auto_awesome_rounded, color: pal.accent),
-                            const SizedBox(height: 6),
-                            const Text('Deeper insights with Pro',
-                                style: TextStyle(fontWeight: FontWeight.w800)),
-                            const SizedBox(height: 2),
-                            Text('Tap to unlock',
-                                style: TextStyle(
-                                    color: pal.accent, fontWeight: FontWeight.w700)),
-                          ],
-                        ),
-                      ).animate(onPlay: (c) => c.repeat(reverse: true)).scaleXY(
-                          end: 1.04, duration: 1200.ms, curve: Curves.easeInOut),
+                      child:
+                          Container(
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 22,
+                                  vertical: 16,
+                                ),
+                                decoration: BoxDecoration(
+                                  color: pal.card,
+                                  borderRadius: BorderRadius.circular(20),
+                                  boxShadow: softShadow(context),
+                                ),
+                                child: Column(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    Icon(
+                                      Icons.auto_awesome_rounded,
+                                      color: pal.accent,
+                                    ),
+                                    const SizedBox(height: 6),
+                                    const Text(
+                                      'Deeper insights with Pro',
+                                      style: TextStyle(
+                                        fontWeight: FontWeight.w800,
+                                      ),
+                                    ),
+                                    const SizedBox(height: 2),
+                                    Text(
+                                      'Tap to unlock',
+                                      style: TextStyle(
+                                        color: pal.accent,
+                                        fontWeight: FontWeight.w700,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              )
+                              .animate(onPlay: (c) => c.repeat(reverse: true))
+                              .scaleXY(
+                                end: 1.04,
+                                duration: 1200.ms,
+                                curve: Curves.easeInOut,
+                              ),
                     ),
                   ),
                 ],
@@ -367,17 +439,25 @@ class _Tile extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text(value,
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-                style: TextStyle(
-                    fontSize: big ? 28 : 20,
-                    fontWeight: FontWeight.w800,
-                    letterSpacing: -0.5)),
+            Text(
+              value,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: TextStyle(
+                fontSize: big ? 28 : 20,
+                fontWeight: FontWeight.w800,
+                letterSpacing: -0.5,
+              ),
+            ),
             const SizedBox(height: 2),
-            Text(label,
-                style: TextStyle(
-                    color: pal.muted, fontSize: 12.5, fontWeight: FontWeight.w600)),
+            Text(
+              label,
+              style: TextStyle(
+                color: pal.muted,
+                fontSize: 12.5,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
           ],
         ),
       ),
@@ -409,9 +489,14 @@ class _Card extends StatelessWidget {
               Text(title, style: const TextStyle(fontWeight: FontWeight.w800)),
               const Spacer(),
               if (trailing != null)
-                Text(trailing!,
-                    style: TextStyle(
-                        color: pal.accent, fontWeight: FontWeight.w700, fontSize: 12.5)),
+                Text(
+                  trailing!,
+                  style: TextStyle(
+                    color: pal.accent,
+                    fontWeight: FontWeight.w700,
+                    fontSize: 12.5,
+                  ),
+                ),
             ],
           ),
           const SizedBox(height: 16),

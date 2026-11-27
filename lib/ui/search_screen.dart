@@ -59,36 +59,40 @@ class _SearchScreenState extends State<SearchScreen> {
       ),
       body: _q.text.trim().isEmpty
           ? Center(
-              child: Text('Find anything you planned',
-                  style: TextStyle(color: pal.muted, fontWeight: FontWeight.w600)),
+              child: Text(
+                'Find anything you planned',
+                style: TextStyle(color: pal.muted, fontWeight: FontWeight.w600),
+              ),
             )
           : results.isEmpty
-              ? Center(
-                  child: Text('No matches',
-                      style: TextStyle(color: pal.muted, fontWeight: FontWeight.w600)),
-                ).animate().fadeIn()
-              : ListView.builder(
-                  padding: const EdgeInsets.all(16),
-                  itemCount: results.length,
-                  itemBuilder: (context, i) {
-                    final t = results[i];
-                    final day = dateOnly(t.date);
-                    return Padding(
-                      padding: const EdgeInsets.only(bottom: 10),
-                      child: TaskTile(
-                        key: ValueKey(t.id),
-                        task: t,
-                        day: day,
-                        showDate: true,
-                        onToggle: () => store.toggleDone(t, day),
-                        onOpen: () => showTaskEditor(context, task: t, day: day),
-                        onDelete: () => store.delete(t),
-                        onTomorrow: () => store.moveTo(
-                            t, addDays(dateOnly(DateTime.now()), 1)),
-                      ),
-                    ).animate().fadeIn(duration: 220.ms, delay: (i * 30).ms);
-                  },
-                ),
+          ? Center(
+              child: Text(
+                'No matches',
+                style: TextStyle(color: pal.muted, fontWeight: FontWeight.w600),
+              ),
+            ).animate().fadeIn()
+          : ListView.builder(
+              padding: const EdgeInsets.all(16),
+              itemCount: results.length,
+              itemBuilder: (context, i) {
+                final t = results[i];
+                final day = dateOnly(t.date);
+                return Padding(
+                  padding: const EdgeInsets.only(bottom: 10),
+                  child: TaskTile(
+                    key: ValueKey(t.id),
+                    task: t,
+                    day: day,
+                    showDate: true,
+                    onToggle: () => store.toggleDone(t, day),
+                    onOpen: () => showTaskEditor(context, task: t, day: day),
+                    onDelete: () => store.delete(t),
+                    onTomorrow: () =>
+                        store.moveTo(t, addDays(dateOnly(DateTime.now()), 1)),
+                  ),
+                ).animate().fadeIn(duration: 220.ms, delay: (i * 30).ms);
+              },
+            ),
     );
   }
 }

@@ -10,15 +10,23 @@ class ParsedTask {
     this.timeMinutes,
     this.priority,
     this.tag,
+    this.anytime = false,
   });
   final String title;
+
+  /// "someday" / "anytime": goes to the Tasks list, not a particular day.
+  final bool anytime;
   final DateTime? date;
   final int? timeMinutes;
   final Priority? priority;
   final String? tag;
 
   bool get hasTokens =>
-      date != null || timeMinutes != null || priority != null || tag != null;
+      date != null ||
+      timeMinutes != null ||
+      priority != null ||
+      tag != null ||
+      anytime;
 }
 
 const _weekdays = {
@@ -35,6 +43,7 @@ ParsedTask parseQuickAdd(String input, {DateTime? now}) {
   int? time;
   Priority? priority;
   String? tag;
+  var anytime = false;
 
   for (var i = 0; i < words.length; i++) {
     final raw = words[i];
@@ -56,12 +65,18 @@ ParsedTask parseQuickAdd(String input, {DateTime? now}) {
     }
 
     // Tag: #work
-    if (w.startsWith('#') && w.length > 1) {
+    if (w.startsWith('#') && w.length > 1 && w != '#list') {
       final name = w.substring(1);
       for (final t in builtInTags) {
         if (t.name.toLowerCase() == name) tag = t.name;
       }
       if (tag != null) continue;
+    }
+
+    // No particular day -> Tasks list
+    if (w == 'someday' || w == 'anytime' || w == '#list') {
+      anytime = true;
+      continue;
     }
 
     // Dates
@@ -110,6 +125,7 @@ ParsedTask parseQuickAdd(String input, {DateTime? now}) {
     timeMinutes: time,
     priority: priority,
     tag: tag,
+    anytime: anytime && date == null,
   );
 }
 

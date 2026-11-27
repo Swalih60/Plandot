@@ -19,6 +19,8 @@ class TaskTile extends StatefulWidget {
     required this.onDelete,
     required this.onTomorrow,
     this.onFocus,
+    this.onToday,
+    this.onToList,
     this.showDate = false,
   });
 
@@ -31,6 +33,12 @@ class TaskTile extends StatefulWidget {
 
   /// Opens the focus timer; the menu item is hidden when null.
   final VoidCallback? onFocus;
+
+  /// Plans the task for today (shown for Tasks-list items).
+  final VoidCallback? onToday;
+
+  /// Sends a planned task to the Tasks list (no particular day).
+  final VoidCallback? onToList;
   final bool showDate;
 
   @override
@@ -40,14 +48,14 @@ class TaskTile extends StatefulWidget {
 class _TaskTileState extends State<TaskTile> {
   /// Visual state; flips immediately so the animation plays before the
   /// task actually moves to the other section.
-  late bool _checked = widget.task.isDoneOn(widget.day);
+  late bool _checked = widget.task.doneFor(widget.day);
   bool _pressed = false;
   bool _pending = false;
 
   @override
   void didUpdateWidget(TaskTile old) {
     super.didUpdateWidget(old);
-    if (!_pending) _checked = widget.task.isDoneOn(widget.day);
+    if (!_pending) _checked = widget.task.doneFor(widget.day);
   }
 
   void _toggle(bool v) {
@@ -58,7 +66,7 @@ class _TaskTileState extends State<TaskTile> {
     // Give the check + strikethrough time to play before the row moves.
     Future.delayed(const Duration(milliseconds: 560), () {
       _pending = false;
-      if (widget.task.isDoneOn(widget.day) != v) widget.onToggle();
+      if (widget.task.doneFor(widget.day) != v) widget.onToggle();
     });
   }
 
@@ -70,18 +78,25 @@ class _TaskTileState extends State<TaskTile> {
     final tag = tagByName(t.tag);
 
     final chips = <Widget>[
-      if (widget.showDate)
+      if (widget.showDate && t.anytime)
+        const _Chip(icon: Icons.inbox_rounded, label: 'Tasks list')
+      else if (widget.showDate)
         _Chip(
           icon: Icons.event_rounded,
           label: _relDate(t.date),
-          color: t.isOverdue(DateTime.now()) ? priorityColor(Priority.high) : null,
+          color: t.isOverdue(DateTime.now())
+              ? priorityColor(Priority.high)
+              : null,
         ),
       if (t.timeMinutes != null)
         _Chip(
-          icon: t.remind ? Icons.notifications_active_rounded : Icons.schedule_rounded,
+          icon: t.remind
+              ? Icons.notifications_active_rounded
+              : Icons.schedule_rounded,
           label: formatMinutes(t.timeMinutes!),
         ),
-      if (tag != null) _Chip(emoji: tag.emoji, label: tag.name, color: tagColors[tag.color]),
+      if (tag != null)
+        _Chip(emoji: tag.emoji, label: tag.name, color: tagColors[tag.color]),
       if (t.subtasks.isNotEmpty)
         _Chip(
           icon: Icons.checklist_rounded,
@@ -93,7 +108,8 @@ class _TaskTileState extends State<TaskTile> {
           label: '${t.focusOn(widget.day)}m',
           color: pc == priorityColor(Priority.none) ? pal.accent : pc,
         ),
-      if (t.repeat != Repeat.none) _Chip(icon: Icons.repeat_rounded, label: t.repeat.label),
+      if (t.repeat != Repeat.none)
+        _Chip(icon: Icons.repeat_rounded, label: t.repeat.label),
       if (t.notes.isNotEmpty) const _Chip(icon: Icons.notes_rounded),
     ];
 
@@ -127,7 +143,8 @@ class _TaskTileState extends State<TaskTile> {
                           ? Colors.transparent
                           : pc.withValues(alpha: _checked ? 0.3 : 1),
                       borderRadius: const BorderRadius.horizontal(
-                          right: Radius.circular(4)),
+                        right: Radius.circular(4),
+                      ),
                     ),
                   ),
                   Padding(
@@ -164,7 +181,11 @@ class _TaskTileState extends State<TaskTile> {
                             AnimatedOpacity(
                               duration: T.med,
                               opacity: _checked ? 0.55 : 1,
-                              child: Wrap(spacing: 6, runSpacing: 6, children: chips),
+                              child: Wrap(
+                                spacing: 6,
+                                runSpacing: 6,
+                                children: chips,
+                              ),
                             ),
                           ],
                         ],
@@ -242,17 +263,45 @@ class _TaskTileState extends State<TaskTile> {
                   widget.onFocus!();
                 },
               ),
+            if (widget.onToday != null)
+              ListTile(
+                leading: Icon(Icons.today_rounded, color: context.pal.accent),
+                title: const Text('Do it today'),
+                subtitle: const Text('Plan this task for today'),
+                onTap: () {
+                  Navigator.pop(ctx);
+                  widget.onToday!();
+                },
+              ),
+            if (widget.onToList != null)
+              ListTile(
+                leading: const Icon(Icons.inbox_rounded),
+                title: const Text('Move to Tasks list'),
+                subtitle: const Text('Keep it without a date until it\'s done'),
+                onTap: () {
+                  Navigator.pop(ctx);
+                  widget.onToList!();
+                },
+              ),
             ListTile(
               leading: const Icon(Icons.wb_twilight_rounded),
-              title: const Text('Move to tomorrow'),
+              title: Text(
+                widget.task.anytime ? 'Plan for tomorrow' : 'Move to tomorrow',
+              ),
               onTap: () {
                 Navigator.pop(ctx);
                 widget.onTomorrow();
               },
             ),
             ListTile(
-              leading: Icon(Icons.delete_rounded, color: priorityColor(Priority.high)),
-              title: Text('Delete', style: TextStyle(color: priorityColor(Priority.high))),
+              leading: Icon(
+                Icons.delete_rounded,
+                color: priorityColor(Priority.high),
+              ),
+              title: Text(
+                'Delete',
+                style: TextStyle(color: priorityColor(Priority.high)),
+              ),
               onTap: () {
                 Navigator.pop(ctx);
                 widget.onDelete();
@@ -272,7 +321,20 @@ String _relDate(DateTime d) {
   if (diff == 0) return 'Today';
   if (diff == 1) return 'Tomorrow';
   if (diff == -1) return 'Yesterday';
-  const m = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+  const m = [
+    'Jan',
+    'Feb',
+    'Mar',
+    'Apr',
+    'May',
+    'Jun',
+    'Jul',
+    'Aug',
+    'Sep',
+    'Oct',
+    'Nov',
+    'Dec',
+  ];
   return '${d.day} ${m[d.month - 1]}';
 }
 
@@ -363,7 +425,10 @@ class _Chip extends StatelessWidget {
     final pal = context.pal;
     final c = color ?? pal.muted;
     return Container(
-      padding: EdgeInsets.symmetric(horizontal: label == null ? 6 : 8, vertical: 4),
+      padding: EdgeInsets.symmetric(
+        horizontal: label == null ? 6 : 8,
+        vertical: 4,
+      ),
       decoration: BoxDecoration(
         color: (color ?? pal.muted).withValues(alpha: 0.11),
         borderRadius: BorderRadius.circular(999),
@@ -375,8 +440,14 @@ class _Chip extends StatelessWidget {
           if (icon != null) Icon(icon, size: 13, color: c),
           if (label != null) ...[
             const SizedBox(width: 4),
-            Text(label!,
-                style: TextStyle(fontSize: 11.5, fontWeight: FontWeight.w700, color: c)),
+            Text(
+              label!,
+              style: TextStyle(
+                fontSize: 11.5,
+                fontWeight: FontWeight.w700,
+                color: c,
+              ),
+            ),
           ],
         ],
       ),
@@ -410,8 +481,13 @@ class _SwipeBg extends StatelessWidget {
         children: [
           Icon(icon, color: Colors.white),
           const SizedBox(width: 8),
-          Text(label,
-              style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w800)),
+          Text(
+            label,
+            style: const TextStyle(
+              color: Colors.white,
+              fontWeight: FontWeight.w800,
+            ),
+          ),
         ],
       ),
     );

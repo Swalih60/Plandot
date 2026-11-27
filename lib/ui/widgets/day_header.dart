@@ -29,8 +29,10 @@ class WeekStrip extends StatefulWidget {
 class _WeekStripState extends State<WeekStrip> {
   static const _center = 500;
   late final PageController _pc = PageController(initialPage: _center);
-  late DateTime _anchor =
-      startOfWeek(DateTime.now(), mondayFirst: widget.mondayFirst);
+  late DateTime _anchor = startOfWeek(
+    DateTime.now(),
+    mondayFirst: widget.mondayFirst,
+  );
 
   DateTime _weekStart(int page) => addDays(_anchor, 7 * (page - _center));
 
@@ -41,10 +43,12 @@ class _WeekStripState extends State<WeekStrip> {
       _anchor = startOfWeek(DateTime.now(), mondayFirst: widget.mondayFirst);
     }
     // Keep the selected day visible (e.g. after "Today" is tapped).
-    final page = _center +
-        (startOfWeek(widget.selected, mondayFirst: widget.mondayFirst)
-                    .difference(_anchor)
-                    .inDays /
+    final page =
+        _center +
+        (startOfWeek(
+                  widget.selected,
+                  mondayFirst: widget.mondayFirst,
+                ).difference(_anchor).inDays /
                 7)
             .round();
     if (_pc.hasClients && _pc.page?.round() != page) {
@@ -68,80 +72,81 @@ class _WeekStripState extends State<WeekStrip> {
           final start = _weekStart(page);
           return Padding(
             padding: const EdgeInsets.symmetric(horizontal: 12),
-            child: LayoutBuilder(builder: (context, c) {
-              final w = c.maxWidth / 7;
-              final selIndex =
-                  widget.selected.difference(start).inDays;
-              final pal = context.pal;
-              return Stack(
-                children: [
-                  if (selIndex >= 0 && selIndex < 7)
-                    AnimatedPositioned(
-                      duration: const Duration(milliseconds: 380),
-                      curve: Curves.easeOutBack,
-                      left: selIndex * w + 4,
-                      top: 4,
-                      width: w - 8,
-                      height: 78,
-                      child: Container(
-                        decoration: BoxDecoration(
-                          color: pal.ink,
-                          borderRadius: BorderRadius.circular(18),
-                        ),
-                      ),
-                    ),
-                  Row(
-                    children: List.generate(7, (i) {
-                      final d = addDays(start, i);
-                      final sel = i == selIndex;
-                      final today = isSameDay(d, DateTime.now());
-                      final (done, total) = widget.progress(d);
-                      return SizedBox(
-                        width: w,
-                        child: GestureDetector(
-                          behavior: HitTestBehavior.opaque,
-                          onTap: () {
-                            HapticFeedback.selectionClick();
-                            widget.onSelect(d);
-                          },
-                          child: Column(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: [
-                              Text(
-                                DateFormat('E').format(d).toUpperCase(),
-                                style: TextStyle(
-                                  fontSize: 10.5,
-                                  letterSpacing: 0.6,
-                                  fontWeight: FontWeight.w700,
-                                  color: sel
-                                      ? pal.bg.withValues(alpha: 0.7)
-                                      : pal.muted,
-                                ),
-                              ),
-                              const SizedBox(height: 6),
-                              Text(
-                                '${d.day}',
-                                style: TextStyle(
-                                  fontSize: 18,
-                                  fontWeight: FontWeight.w800,
-                                  color: sel
-                                      ? pal.bg
-                                      : today
-                                          ? pal.accent
-                                          : pal.ink,
-                                ),
-                              ),
-                              const SizedBox(height: 6),
-                              _Dot(done: done, total: total, sel: sel),
-                            ],
+            child: LayoutBuilder(
+              builder: (context, c) {
+                final w = c.maxWidth / 7;
+                final selIndex = widget.selected.difference(start).inDays;
+                final pal = context.pal;
+                return Stack(
+                  children: [
+                    if (selIndex >= 0 && selIndex < 7)
+                      AnimatedPositioned(
+                        duration: const Duration(milliseconds: 380),
+                        curve: Curves.easeOutBack,
+                        left: selIndex * w + 4,
+                        top: 4,
+                        width: w - 8,
+                        height: 78,
+                        child: Container(
+                          decoration: BoxDecoration(
+                            color: pal.ink,
+                            borderRadius: BorderRadius.circular(18),
                           ),
                         ),
-                      );
-                    }),
-                  ),
-                ],
-              );
-            }),
+                      ),
+                    Row(
+                      children: List.generate(7, (i) {
+                        final d = addDays(start, i);
+                        final sel = i == selIndex;
+                        final today = isSameDay(d, DateTime.now());
+                        final (done, total) = widget.progress(d);
+                        return SizedBox(
+                          width: w,
+                          child: GestureDetector(
+                            behavior: HitTestBehavior.opaque,
+                            onTap: () {
+                              HapticFeedback.selectionClick();
+                              widget.onSelect(d);
+                            },
+                            child: Column(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                Text(
+                                  DateFormat('E').format(d).toUpperCase(),
+                                  style: TextStyle(
+                                    fontSize: 10.5,
+                                    letterSpacing: 0.6,
+                                    fontWeight: FontWeight.w700,
+                                    color: sel
+                                        ? pal.bg.withValues(alpha: 0.7)
+                                        : pal.muted,
+                                  ),
+                                ),
+                                const SizedBox(height: 6),
+                                Text(
+                                  '${d.day}',
+                                  style: TextStyle(
+                                    fontSize: 18,
+                                    fontWeight: FontWeight.w800,
+                                    color: sel
+                                        ? pal.bg
+                                        : today
+                                        ? pal.accent
+                                        : pal.ink,
+                                  ),
+                                ),
+                                const SizedBox(height: 6),
+                                _Dot(done: done, total: total, sel: sel),
+                              ],
+                            ),
+                          ),
+                        );
+                      }),
+                    ),
+                  ],
+                );
+              },
+            ),
           );
         },
       ),
@@ -166,7 +171,9 @@ class _Dot extends StatelessWidget {
       decoration: BoxDecoration(
         color: all
             ? (sel ? pal.bg : pal.accent)
-            : (sel ? pal.bg.withValues(alpha: 0.5) : pal.muted.withValues(alpha: 0.5)),
+            : (sel
+                  ? pal.bg.withValues(alpha: 0.5)
+                  : pal.muted.withValues(alpha: 0.5)),
         borderRadius: BorderRadius.circular(6),
       ),
     );
@@ -208,7 +215,11 @@ class ProgressCard extends StatelessWidget {
           end: Alignment.bottomRight,
           colors: [
             a,
-            Color.lerp(a, pal.dark ? Colors.black : const Color(0xFF1A1033), 0.35)!,
+            Color.lerp(
+              a,
+              pal.dark ? Colors.black : const Color(0xFF1A1033),
+              0.35,
+            )!,
           ],
         ),
         boxShadow: [
@@ -253,8 +264,10 @@ class ProgressCard extends StatelessWidget {
                   transitionBuilder: (c, an) => FadeTransition(
                     opacity: an,
                     child: SlideTransition(
-                      position: Tween(begin: const Offset(0, 0.3), end: Offset.zero)
-                          .animate(an),
+                      position: Tween(
+                        begin: const Offset(0, 0.3),
+                        end: Offset.zero,
+                      ).animate(an),
                       child: c,
                     ),
                   ),
@@ -282,8 +295,10 @@ class ProgressCard extends StatelessWidget {
                 if (streak > 0) ...[
                   const SizedBox(height: 10),
                   Container(
-                    padding:
-                        const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 10,
+                      vertical: 5,
+                    ),
                     decoration: BoxDecoration(
                       color: Colors.white.withValues(alpha: 0.18),
                       borderRadius: BorderRadius.circular(999),
@@ -291,9 +306,10 @@ class ProgressCard extends StatelessWidget {
                     child: Text(
                       '🔥 $streak-day perfect streak',
                       style: const TextStyle(
-                          color: Colors.white,
-                          fontSize: 12,
-                          fontWeight: FontWeight.w700),
+                        color: Colors.white,
+                        fontSize: 12,
+                        fontWeight: FontWeight.w700,
+                      ),
                     ),
                   ),
                 ],
@@ -325,8 +341,13 @@ class _RingPainter extends CustomPainter {
       ..strokeWidth = 8
       ..strokeCap = StrokeCap.round
       ..color = Colors.white;
-    canvas.drawArc(Rect.fromCircle(center: c, radius: r), -math.pi / 2,
-        2 * math.pi * v, false, arc);
+    canvas.drawArc(
+      Rect.fromCircle(center: c, radius: r),
+      -math.pi / 2,
+      2 * math.pi * v,
+      false,
+      arc,
+    );
   }
 
   @override

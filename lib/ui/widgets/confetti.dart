@@ -18,12 +18,12 @@ class Confetti extends StatefulWidget {
 
 class _Particle {
   _Particle(math.Random r, this.color)
-      : x = 0.5 + (r.nextDouble() - 0.5) * 0.2,
-        vx = (r.nextDouble() - 0.5) * 1.6,
-        vy = -(0.9 + r.nextDouble() * 0.9),
-        spin = (r.nextDouble() - 0.5) * 14,
-        size = 6 + r.nextDouble() * 6,
-        circle = r.nextBool();
+    : x = 0.5 + (r.nextDouble() - 0.5) * 0.2,
+      vx = (r.nextDouble() - 0.5) * 1.6,
+      vy = -(0.9 + r.nextDouble() * 0.9),
+      spin = (r.nextDouble() - 0.5) * 14,
+      size = 6 + r.nextDouble() * 6,
+      circle = r.nextBool();
   final double x, vx, vy, spin, size;
   final bool circle;
   final Color color;
@@ -32,7 +32,9 @@ class _Particle {
 class _ConfettiState extends State<Confetti>
     with SingleTickerProviderStateMixin {
   late final _c = AnimationController(
-      vsync: this, duration: const Duration(milliseconds: 1800));
+    vsync: this,
+    duration: const Duration(milliseconds: 1800),
+  );
   List<_Particle> _ps = const [];
 
   @override
@@ -44,7 +46,9 @@ class _ConfettiState extends State<Confetti>
   void _fire() {
     final r = math.Random();
     _ps = List.generate(
-        90, (i) => _Particle(r, widget.colors[i % widget.colors.length]));
+      90,
+      (i) => _Particle(r, widget.colors[i % widget.colors.length]),
+    );
     _c.forward(from: 0);
   }
 
@@ -57,14 +61,13 @@ class _ConfettiState extends State<Confetti>
 
   @override
   Widget build(BuildContext context) => IgnorePointer(
-        child: AnimatedBuilder(
-          animation: _c,
-          builder: (_, _) => _c.isAnimating
-              ? CustomPaint(
-                  size: Size.infinite, painter: _Painter(_ps, _c.value))
-              : const SizedBox.shrink(),
-        ),
-      );
+    child: AnimatedBuilder(
+      animation: _c,
+      builder: (_, _) => _c.isAnimating
+          ? CustomPaint(size: Size.infinite, painter: _Painter(_ps, _c.value))
+          : const SizedBox.shrink(),
+    ),
+  );
 }
 
 class _Painter extends CustomPainter {
@@ -79,7 +82,8 @@ class _Painter extends CustomPainter {
     final fade = t < 0.75 ? 1.0 : (1 - (t - 0.75) / 0.25);
     for (final p in ps) {
       final x = (p.x + p.vx * secs * 0.35) * size.width;
-      final y = size.height * 0.42 +
+      final y =
+          size.height * 0.42 +
           (p.vy * secs + 0.5 * g * secs * secs) * size.height * 0.45;
       final paint = Paint()..color = p.color.withValues(alpha: fade);
       canvas.save();
@@ -89,11 +93,16 @@ class _Painter extends CustomPainter {
         canvas.drawCircle(Offset.zero, p.size / 2.4, paint);
       } else {
         canvas.drawRRect(
-            RRect.fromRectAndRadius(
-                Rect.fromCenter(
-                    center: Offset.zero, width: p.size, height: p.size * 0.45),
-                const Radius.circular(2)),
-            paint);
+          RRect.fromRectAndRadius(
+            Rect.fromCenter(
+              center: Offset.zero,
+              width: p.size,
+              height: p.size * 0.45,
+            ),
+            const Radius.circular(2),
+          ),
+          paint,
+        );
       }
       canvas.restore();
     }
