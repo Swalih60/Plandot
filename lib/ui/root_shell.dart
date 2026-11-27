@@ -3,13 +3,14 @@ import 'package:material_ui/material_ui.dart';
 import 'package:provider/provider.dart';
 
 import '../data/task_store.dart';
+import '../services/sounds.dart';
 import 'home_screen.dart';
 import 'tasks_screen.dart';
 import 'theme.dart';
-import '../services/sounds.dart';
 
-/// Two main areas: Today (day planner) and Tasks (undated master list),
-/// switched with a floating pill bar whose highlight glides between tabs.
+/// Two main areas: Today (day planner) and Tasks (undated master list).
+/// There is no bottom bar — the bottom stays clean with just the + button.
+/// The Today | Tasks switch sits at the top of both screens ([ShellSwitch]).
 class RootShell extends StatefulWidget {
   const RootShell({super.key, this.initialTab = 0});
   final int initialTab;
@@ -32,17 +33,42 @@ class _RootShellState extends State<RootShell> {
   @override
   Widget build(BuildContext context) {
     final openCount = context.select<TaskStore, int>((s) => s.listOpenCount);
-    return Scaffold(
-      body: IndexedStack(
-        index: _tab,
-        children: [
-          _FadeIn(visible: _tab == 0, child: const HomeScreen()),
-          _FadeIn(visible: _tab == 1, child: const TasksScreen()),
-        ],
+    return ShellScope(
+      tab: _tab,
+      badge: openCount,
+      go: _go,
+      child: Scaffold(
+        body: IndexedStack(
+          index: _tab,
+          children: [
+            _FadeIn(visible: _tab == 0, child: const HomeScreen()),
+            _FadeIn(visible: _tab == 1, child: const TasksScreen()),
+          ],
+        ),
       ),
-      bottomNavigationBar: _NavBar(tab: _tab, onTap: _go, badge: openCount),
     );
   }
+}
+
+/// Gives both screens the current tab, the open-task count and the switch.
+class ShellScope extends InheritedWidget {
+  const ShellScope({
+    super.key,
+    required this.tab,
+    required this.badge,
+    required this.go,
+    required super.child,
+  });
+  final int tab;
+  final int badge;
+  final ValueChanged<int> go;
+
+  static ShellScope? maybeOf(BuildContext context) =>
+      context.dependOnInheritedWidgetOfExactType<ShellScope>();
+
+  @override
+  bool updateShouldNotify(ShellScope old) =>
+      old.tab != tab || old.badge != badge;
 }
 
 /// Soft fade + slight rise when a tab becomes visible.
@@ -65,142 +91,160 @@ class _FadeIn extends StatelessWidget {
   );
 }
 
-class _NavBar extends StatelessWidget {
-  const _NavBar({required this.tab, required this.onTap, required this.badge});
-  final int tab;
-  final ValueChanged<int> onTap;
-  final int badge;
+/// Compact, centred Today | Tasks switch for the top of each screen.
+/// Renders nothing when used outside [RootShell] (e.g. in tests).
+class ShellSwitch extends StatelessWidget {
+  const ShellSwitch({super.key});
 
   @override
   Widget build(BuildContext context) {
+    final scope = ShellScope.maybeOf(context);
+    if (scope == null) return const SizedBox.shrink();
     final pal = context.pal;
     const items = [
       (Icons.today_rounded, 'Today'),
       (Icons.inbox_rounded, 'Tasks'),
     ];
-    // Solid, full-width bar: content ends above it (never hidden behind),
-    // the tab switch is centred, and each screen's + button sits above it.
-    return DecoratedBox(
-      decoration: BoxDecoration(
-        color: pal.bg,
-        border: Border(top: BorderSide(color: pal.line)),
-      ),
-      child: SafeArea(
-        top: false,
-        child: Padding(
-          padding: const EdgeInsets.fromLTRB(16, 10, 16, 10),
-          child: Container(
-            height: 56,
-            padding: const EdgeInsets.all(5),
-            decoration: BoxDecoration(
-              color: pal.card,
-              borderRadius: BorderRadius.circular(999),
-              border: Border.all(color: pal.line),
-            ),
-            child: LayoutBuilder(
-              builder: (context, c) {
-                final w = c.maxWidth / items.length;
-                return Stack(
-                  children: [
-                    AnimatedPositioned(
-                      duration: const Duration(milliseconds: 380),
-                      curve: Curves.easeOutBack,
-                      left: tab * w,
-                      top: 0,
-                      bottom: 0,
-                      width: w,
-                      child: Container(
-                        decoration: BoxDecoration(
-                          color: pal.accent,
-                          borderRadius: BorderRadius.circular(999),
-                          boxShadow: [
-                            BoxShadow(
-                              color: pal.accent.withValues(alpha: 0.35),
-                              blurRadius: 12,
-                              offset: const Offset(0, 4),
-                            ),
-                          ],
-                        ),
+    return Padding(
+      padding: const EdgeInsets.only(top: 6, bottom: 2),
+      child: Center(
+        child: Container(
+          width: 264,
+          height: 42,
+          padding: const EdgeInsets.all(4),
+          decoration: BoxDecoration(
+            color: pal.card,
+            borderRadius: BorderRadius.circular(999),
+            border: Border.all(color: pal.line),
+          ),
+          child: LayoutBuilder(
+            builder: (context, c) {
+              final w = c.maxWidth / items.length;
+              return Stack(
+                children: [
+                  AnimatedPositioned(
+                    duration: const Duration(milliseconds: 360),
+                    curve: Curves.easeOutBack,
+                    left: scope.tab * w,
+                    top: 0,
+                    bottom: 0,
+                    width: w,
+                    child: Container(
+                      decoration: BoxDecoration(
+                        color: pal.accent,
+                        borderRadius: BorderRadius.circular(999),
+                        boxShadow: [
+                          BoxShadow(
+                            color: pal.accent.withValues(alpha: 0.35),
+                            blurRadius: 10,
+                            offset: const Offset(0, 3),
+                          ),
+                        ],
                       ),
                     ),
-                    Row(
-                      children: [
-                        for (var i = 0; i < items.length; i++)
-                          Expanded(
+                  ),
+                  Row(
+                    children: [
+                      for (var i = 0; i < items.length; i++)
+                        Expanded(
+                          child: Semantics(
+                            button: true,
+                            selected: scope.tab == i,
+                            label: items[i].$2,
                             child: GestureDetector(
                               behavior: HitTestBehavior.opaque,
-                              onTap: () => onTap(i),
-                              child: Row(
-                                mainAxisAlignment: MainAxisAlignment.center,
-                                children: [
-                                  AnimatedScale(
-                                    scale: tab == i ? 1.1 : 1,
-                                    duration: T.med,
-                                    curve: Curves.easeOutBack,
-                                    child: Icon(
-                                      items[i].$1,
-                                      size: 21,
-                                      color: tab == i
-                                          ? Colors.white
-                                          : pal.muted,
-                                    ),
-                                  ),
-                                  const SizedBox(width: 7),
-                                  AnimatedDefaultTextStyle(
-                                    duration: T.fast,
-                                    style: TextStyle(
-                                      fontFamily: 'Jakarta',
-                                      fontWeight: FontWeight.w800,
-                                      fontSize: 14,
-                                      color: tab == i
-                                          ? Colors.white
-                                          : pal.muted,
-                                    ),
-                                    child: Text(items[i].$2),
-                                  ),
-                                  if (i == 1 && badge > 0) ...[
-                                    const SizedBox(width: 6),
-                                    AnimatedSwitcher(
-                                      duration: T.fast,
-                                      transitionBuilder: (c, a) =>
-                                          ScaleTransition(scale: a, child: c),
-                                      child: Container(
-                                        key: ValueKey(badge),
-                                        padding: const EdgeInsets.symmetric(
-                                          horizontal: 6,
-                                          vertical: 1,
-                                        ),
-                                        decoration: BoxDecoration(
-                                          color: tab == i
-                                              ? Colors.white
-                                              : pal.accent,
-                                          borderRadius: BorderRadius.circular(
-                                            999,
-                                          ),
-                                        ),
-                                        child: Text(
-                                          '$badge',
-                                          style: TextStyle(
-                                            color: tab == i
-                                                ? pal.accent
-                                                : Colors.white,
-                                            fontSize: 11,
-                                            fontWeight: FontWeight.w800,
-                                          ),
-                                        ),
-                                      ),
-                                    ),
-                                  ],
-                                ],
+                              onTap: () => scope.go(i),
+                              child: _TabLabel(
+                                icon: items[i].$1,
+                                label: items[i].$2,
+                                selected: scope.tab == i,
+                                badge: i == 1 ? scope.badge : 0,
                               ),
                             ),
                           ),
-                      ],
+                        ),
+                    ],
+                  ),
+                ],
+              );
+            },
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _TabLabel extends StatelessWidget {
+  const _TabLabel({
+    required this.icon,
+    required this.label,
+    required this.selected,
+    required this.badge,
+  });
+  final IconData icon;
+  final String label;
+  final bool selected;
+  final int badge;
+
+  @override
+  Widget build(BuildContext context) {
+    final pal = context.pal;
+    final fg = selected ? Colors.white : pal.muted;
+    // Scales down instead of overflowing on large system font sizes.
+    return Center(
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 6),
+        child: FittedBox(
+          fit: BoxFit.scaleDown,
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              AnimatedScale(
+                scale: selected ? 1.08 : 1,
+                duration: T.med,
+                curve: Curves.easeOutBack,
+                child: Icon(icon, size: 17, color: fg),
+              ),
+              const SizedBox(width: 6),
+              AnimatedDefaultTextStyle(
+                duration: T.fast,
+                style: TextStyle(
+                  fontFamily: 'Jakarta',
+                  fontWeight: FontWeight.w800,
+                  fontSize: 13.5,
+                  color: fg,
+                ),
+                child: Text(label),
+              ),
+              if (badge > 0) ...[
+                const SizedBox(width: 5),
+                AnimatedSwitcher(
+                  duration: T.fast,
+                  transitionBuilder: (c, a) =>
+                      ScaleTransition(scale: a, child: c),
+                  child: Container(
+                    key: ValueKey(badge),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 6,
+                      vertical: 1,
                     ),
-                  ],
-                );
-              },
-            ),
+                    decoration: BoxDecoration(
+                      color: selected ? Colors.white : pal.accent,
+                      borderRadius: BorderRadius.circular(999),
+                    ),
+                    child: Text(
+                      '$badge',
+                      style: TextStyle(
+                        color: selected ? pal.accent : Colors.white,
+                        fontSize: 10.5,
+                        fontWeight: FontWeight.w800,
+                      ),
+                    ),
+                  ),
+                ),
+              ],
+            ],
           ),
         ),
       ),

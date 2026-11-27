@@ -1,5 +1,7 @@
 import 'dart:io';
 
+import 'package:flutter/services.dart';
+
 import 'package:flutter_test/flutter_test.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:provider/provider.dart';
@@ -108,10 +110,42 @@ void main() {
     s!.addTask(title: 'List item', date: today, anytime: true);
     await t.pumpWidget(_wrap(s, const RootShell()));
     await t.pump(const Duration(seconds: 1));
-    await t.tap(find.text('Tasks'));
+    await t.tap(find.text('Tasks').first);
     await t.pump(const Duration(seconds: 1));
     expect(find.text('My Tasks'), findsOneWidget);
     expect(find.text('List item'), findsOneWidget);
     expect(t.takeException(), isNull);
   });
+
+  setUpAll(() async {
+    // Use the real app font so overflow checks match the phone.
+    final loader = FontLoader('Jakarta');
+    for (final w in ['Regular', 'Medium', 'SemiBold', 'Bold', 'ExtraBold']) {
+      loader.addFont(rootBundle.load('assets/fonts/PlusJakartaSans-$w.ttf'));
+    }
+    await loader.load();
+  });
+
+  for (final tab in [0, 1]) {
+    testWidgets('S24 size + 130% font: tab $tab has no overflow', (t) async {
+      t.view.physicalSize = const Size(1080, 2340); // Galaxy S24
+      t.view.devicePixelRatio = 2.625;
+      addTearDown(t.view.reset);
+      final s = await t.runAsync(_store);
+      s!.addTask(title: 'A fairly long task title that wraps onto two lines', date: today, priority: Priority.high, tag: 'Work', timeMinutes: 600);
+      s.addTask(title: 'Renew passport', date: today, anytime: true, priority: Priority.medium, tag: 'Errands');
+      await t.pumpWidget(MediaQuery(
+        data: const MediaQueryData(
+          size: Size(411.4, 891.4),
+          devicePixelRatio: 2.625,
+          textScaler: TextScaler.linear(1.3),
+        ),
+        child: _wrap(s, RootShell(initialTab: tab)),
+      ));
+      await t.pump(const Duration(seconds: 2));
+      expect(t.takeException(), isNull);
+      await t.pumpWidget(const SizedBox());
+      await t.pump(const Duration(seconds: 1));
+    });
+  }
 }

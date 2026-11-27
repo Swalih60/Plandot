@@ -14,6 +14,7 @@ import 'theme.dart';
 import 'widgets/confetti.dart';
 import 'widgets/task_tile.dart';
 import '../services/sounds.dart';
+import 'root_shell.dart';
 
 /// The master Tasks list: things to do that don't belong to a particular
 /// day. They stay here — never overdue — until they're done.
@@ -174,6 +175,10 @@ class _TasksScreenState extends State<TasksScreen> {
               slivers: [
                 SliverSafeArea(
                   bottom: false,
+                  sliver: const SliverToBoxAdapter(child: ShellSwitch()),
+                ),
+                SliverPadding(
+                  padding: EdgeInsets.zero,
                   sliver: SliverToBoxAdapter(
                     child: Padding(
                       padding: const EdgeInsets.fromLTRB(20, 12, 20, 4),

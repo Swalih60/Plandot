@@ -21,6 +21,7 @@ import 'widgets/day_header.dart';
 import 'widgets/task_tile.dart';
 import 'widgets/timeline_view.dart';
 import '../services/sounds.dart';
+import 'root_shell.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -217,6 +218,10 @@ class _HomeScreenState extends State<HomeScreen> {
             slivers: [
               SliverSafeArea(
                 bottom: false,
+                sliver: const SliverToBoxAdapter(child: ShellSwitch()),
+              ),
+              SliverPadding(
+                padding: EdgeInsets.zero,
                 sliver: SliverToBoxAdapter(
                   child: Padding(
                     padding: const EdgeInsets.fromLTRB(20, 12, 8, 4),
