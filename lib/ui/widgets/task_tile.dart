@@ -5,6 +5,7 @@ import '../../models/task.dart';
 import '../../util/dates.dart';
 import '../theme.dart';
 import 'animated_check.dart';
+import '../../services/sounds.dart';
 
 /// A task row: priority accent, animated checkbox, self-drawing
 /// strikethrough, metadata chips, and swipe actions
@@ -59,6 +60,7 @@ class _TaskTileState extends State<TaskTile> {
   }
 
   void _toggle(bool v) {
+    Sounds.instance.play(v ? Sfx.complete : Sfx.uncheck);
     setState(() {
       _checked = v;
       _pending = true;

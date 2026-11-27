@@ -24,6 +24,7 @@ class TaskStore extends ChangeNotifier {
   AppThemeMode themeMode = AppThemeMode.system;
   int accent = 0;
   bool mondayFirst = true;
+  bool soundsOn = true;
   bool paywallSeen = false;
 
   /// Home screen shows the hour timeline instead of the list (Pro).
@@ -282,6 +283,11 @@ class TaskStore extends ChangeNotifier {
     _changed();
   }
 
+  void setSoundsOn(bool v) {
+    soundsOn = v;
+    _changed();
+  }
+
   void setMondayFirst(bool v) {
     mondayFirst = v;
     _changed();
@@ -335,6 +341,7 @@ class TaskStore extends ChangeNotifier {
     );
     accent = (s['accent'] as num?)?.toInt() ?? 0;
     mondayFirst = s['mondayFirst'] as bool? ?? true;
+    soundsOn = s['sounds'] as bool? ?? true;
     paywallSeen = s['paywallSeen'] as bool? ?? false;
     timelineView = s['timelineView'] as bool? ?? false;
     _nextNid = _tasks.fold<int>(0, (m, t) => max(m, t.notificationId)) + 1;
@@ -349,6 +356,7 @@ class TaskStore extends ChangeNotifier {
       'theme': themeMode.name,
       'accent': accent,
       'mondayFirst': mondayFirst,
+      'sounds': soundsOn,
       'paywallSeen': paywallSeen,
       'timelineView': timelineView,
     },

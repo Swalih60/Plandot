@@ -17,6 +17,7 @@ import '../util/dates.dart';
 import 'paywall_screen.dart';
 import 'theme.dart';
 import 'widgets/confetti.dart';
+import '../services/sounds.dart';
 
 /// Opens the focus timer for [task] (Pro). Shows the paywall first if needed.
 Future<void> openFocus(BuildContext context, Task task, DateTime day) async {
@@ -190,6 +191,7 @@ class _FocusScreenState extends State<FocusScreen>
   }
 
   void _complete() {
+    Sounds.instance.play(Sfx.focusEnd);
     _ticker.stop();
     _breath.animateTo(0, duration: T.slow, curve: T.ease);
     HapticFeedback.heavyImpact();

@@ -15,6 +15,7 @@ import '../services/pro_service.dart';
 import '../services/reminders.dart';
 import 'paywall_screen.dart';
 import 'theme.dart';
+import '../services/sounds.dart';
 
 class SettingsScreen extends StatelessWidget {
   const SettingsScreen({super.key});
@@ -249,6 +250,16 @@ class SettingsScreen extends StatelessWidget {
           ]),
           header('PREFERENCES'),
           group([
+            SwitchListTile(
+              secondary: const Icon(Icons.volume_up_rounded),
+              title: const Text('Sound effects'),
+              value: store.soundsOn,
+              onChanged: (v) {
+                store.setSoundsOn(v);
+                Sounds.instance.enabled = v;
+                if (v) Sounds.instance.play(Sfx.complete);
+              },
+            ),
             SwitchListTile(
               secondary: const Icon(Icons.calendar_view_week_rounded),
               title: const Text('Week starts on Monday'),

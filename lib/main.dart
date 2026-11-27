@@ -8,12 +8,16 @@ import 'services/pro_service.dart';
 import 'services/reminders.dart';
 import 'ui/focus_screen.dart';
 import 'ui/onboarding_screen.dart';
+import 'ui/paywall_screen.dart';
 import 'ui/root_shell.dart';
+import 'ui/search_screen.dart';
+import 'ui/settings_screen.dart';
 import 'ui/splash.dart';
 import 'ui/stats_screen.dart';
 import 'ui/task_editor.dart';
 import 'ui/theme.dart';
 import 'util/dates.dart';
+import 'services/sounds.dart';
 
 /// Store-screenshot helper: `--dart-define=SHOT=focus|stats|edit` opens that
 /// screen directly. Never set for store or personal builds.
@@ -28,6 +32,9 @@ Widget? _shotScreen(TaskStore s) {
     'stats' => const StatsScreen(),
     'edit' => _EditShot(task: tasks.first, day: today),
     'tasks' => const RootShell(initialTab: 1),
+    'settings' => const SettingsScreen(),
+    'search' => const SearchScreen(),
+    'paywall' => const PaywallScreen(),
     _ => null,
   };
 }
@@ -60,6 +67,8 @@ Future<void> main() async {
   final pro = ProService();
   await store.load();
   await Reminders.instance.init();
+  Sounds.instance.enabled = store.soundsOn;
+  Sounds.instance.init(); // preload in the background
   pro.init(); // Pro status arrives via listener; don't block first frame.
   runApp(TicklistApp(store: store, pro: pro));
 }

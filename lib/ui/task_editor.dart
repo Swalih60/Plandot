@@ -13,6 +13,7 @@ import '../util/quick_parse.dart';
 import 'focus_screen.dart';
 import 'paywall_screen.dart';
 import 'theme.dart';
+import '../services/sounds.dart';
 
 /// Opens the add/edit sheet. Returns the saved task (or null).
 Future<Task?> showTaskEditor(
@@ -147,6 +148,7 @@ class _TaskEditorState extends State<TaskEditor> {
     }
     await Reminders.instance.scheduleFor(t);
     HapticFeedback.lightImpact();
+    if (!_editing) Sounds.instance.play(Sfx.add);
     if (mounted) Navigator.of(context).pop(t);
   }
 
@@ -567,6 +569,7 @@ class _TaskEditorState extends State<TaskEditor> {
                       final store = context.read<TaskStore>();
                       await Reminders.instance.cancelFor(widget.task!);
                       store.delete(widget.task!);
+                      Sounds.instance.play(Sfx.delete);
                       if (context.mounted) Navigator.pop(context);
                     },
                     icon: const Icon(Icons.delete_outline_rounded),

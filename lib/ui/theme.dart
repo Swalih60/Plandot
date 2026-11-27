@@ -1,5 +1,3 @@
-import 'package:cupertino_ui/cupertino_ui.dart'
-    show CupertinoPageTransitionsBuilder;
 import 'package:material_ui/material_ui.dart';
 
 import '../models/task.dart';
@@ -132,8 +130,8 @@ ThemeData buildTheme(Brightness b, Color accent) {
     ),
     pageTransitionsTheme: const PageTransitionsTheme(
       builders: {
-        TargetPlatform.android: CupertinoPageTransitionsBuilder(),
-        TargetPlatform.iOS: CupertinoPageTransitionsBuilder(),
+        TargetPlatform.android: ZoomFadeTransitions(),
+        TargetPlatform.iOS: ZoomFadeTransitions(),
       },
     ),
   );
@@ -147,3 +145,44 @@ List<BoxShadow> softShadow(BuildContext c) => [
     offset: const Offset(0, 8),
   ),
 ];
+
+/// Premium page transition: the new screen fades in while scaling up from
+/// 94%, and the screen underneath gently recedes. Same on Android and iOS.
+class ZoomFadeTransitions extends PageTransitionsBuilder {
+  const ZoomFadeTransitions();
+
+  @override
+  Duration get transitionDuration => const Duration(milliseconds: 380);
+
+  @override
+  Widget buildTransitions<R>(
+    PageRoute<R> route,
+    BuildContext context,
+    Animation<double> animation,
+    Animation<double> secondaryAnimation,
+    Widget child,
+  ) {
+    final inCurve = CurvedAnimation(
+      parent: animation,
+      curve: Curves.easeOutCubic,
+      reverseCurve: Curves.easeInCubic,
+    );
+    final outCurve = CurvedAnimation(
+      parent: secondaryAnimation,
+      curve: Curves.easeOutCubic,
+    );
+    return FadeTransition(
+      opacity: Tween<double>(begin: 1, end: 0.6).animate(outCurve),
+      child: ScaleTransition(
+        scale: Tween<double>(begin: 1, end: 0.96).animate(outCurve),
+        child: FadeTransition(
+          opacity: inCurve,
+          child: ScaleTransition(
+            scale: Tween<double>(begin: 0.94, end: 1).animate(inCurve),
+            child: child,
+          ),
+        ),
+      ),
+    );
+  }
+}

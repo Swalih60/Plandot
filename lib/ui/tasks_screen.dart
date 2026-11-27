@@ -13,6 +13,7 @@ import 'task_editor.dart';
 import 'theme.dart';
 import 'widgets/confetti.dart';
 import 'widgets/task_tile.dart';
+import '../services/sounds.dart';
 
 /// The master Tasks list: things to do that don't belong to a particular
 /// day. They stay here — never overdue — until they're done.
@@ -58,6 +59,7 @@ class _TasksScreenState extends State<TasksScreen> {
     );
     if (planned) Reminders.instance.scheduleFor(t);
     HapticFeedback.lightImpact();
+    Sounds.instance.play(Sfx.add);
     _quick.clear();
     setState(() => _quickPriority = Priority.none);
     if (planned) {
@@ -71,6 +73,7 @@ class _TasksScreenState extends State<TasksScreen> {
     store.toggleDone(t, _today);
     if (before > 0 && store.listOpenCount == 0) {
       HapticFeedback.heavyImpact();
+      Sounds.instance.play(Sfx.allDone);
       _confetti.fire();
     }
   }
@@ -86,6 +89,7 @@ class _TasksScreenState extends State<TasksScreen> {
     final store = context.read<TaskStore>();
     Reminders.instance.cancelFor(t);
     store.delete(t);
+    Sounds.instance.play(Sfx.delete);
     _snack('Deleted "${t.title}"', undo: () => store.restore(t));
   }
 
@@ -317,7 +321,17 @@ class _TasksScreenState extends State<TasksScreen> {
                               color: pal.muted,
                             ),
                           ),
-                          const Spacer(),
+                          const SizedBox(width: 4),
+                          TextButton.icon(
+                            onPressed: () =>
+                                setState(() => _showDone = !_showDone),
+                            icon: AnimatedRotation(
+                              turns: _showDone ? 0.5 : 0,
+                              duration: T.med,
+                              child: const Icon(Icons.expand_more_rounded),
+                            ),
+                            label: Text(_showDone ? 'Hide' : 'Show'),
+                          ),
                           if (_showDone)
                             TextButton(
                               onPressed: () {
@@ -336,16 +350,6 @@ class _TasksScreenState extends State<TasksScreen> {
                               },
                               child: const Text('Clear'),
                             ),
-                          TextButton.icon(
-                            onPressed: () =>
-                                setState(() => _showDone = !_showDone),
-                            icon: AnimatedRotation(
-                              turns: _showDone ? 0.5 : 0,
-                              duration: T.med,
-                              child: const Icon(Icons.expand_more_rounded),
-                            ),
-                            label: Text(_showDone ? 'Hide' : 'Show'),
-                          ),
                         ],
                       ),
                     ),

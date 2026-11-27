@@ -20,6 +20,7 @@ import 'widgets/confetti.dart';
 import 'widgets/day_header.dart';
 import 'widgets/task_tile.dart';
 import 'widgets/timeline_view.dart';
+import '../services/sounds.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -62,6 +63,7 @@ class _HomeScreenState extends State<HomeScreen> {
         !_celebrated.contains(k)) {
       _celebrated.add(k);
       HapticFeedback.heavyImpact();
+      Sounds.instance.play(Sfx.allDone);
       _confetti.fire();
     }
     // Soft paywall right after the first "aha" moment: a completed task.
@@ -84,6 +86,7 @@ class _HomeScreenState extends State<HomeScreen> {
     final store = context.read<TaskStore>();
     Reminders.instance.cancelFor(t);
     store.delete(t);
+    Sounds.instance.play(Sfx.delete);
     ScaffoldMessenger.of(context)
       ..hideCurrentSnackBar()
       ..showSnackBar(
@@ -802,7 +805,7 @@ class _SectionHeader extends StatelessWidget {
                 ),
               ),
             ),
-            const Spacer(),
+            const SizedBox(width: 4),
             if (action != null)
               TextButton(
                 onPressed: onAction,

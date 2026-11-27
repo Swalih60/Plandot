@@ -6,6 +6,7 @@ import 'package:material_ui/material_ui.dart';
 
 import '../../util/dates.dart';
 import '../theme.dart';
+import '../../services/sounds.dart';
 
 /// Swipeable week strip. The selected pill glides between days.
 class WeekStrip extends StatefulWidget {
@@ -106,6 +107,7 @@ class _WeekStripState extends State<WeekStrip> {
                             behavior: HitTestBehavior.opaque,
                             onTap: () {
                               HapticFeedback.selectionClick();
+                              Sounds.instance.play(Sfx.tap);
                               widget.onSelect(d);
                             },
                             child: Column(
